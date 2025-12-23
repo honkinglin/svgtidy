@@ -8,16 +8,28 @@ pub fn parse(text: &str) -> Result<Document, String> {
     for token in Tokenizer::from(text) {
         let token = token.map_err(|e| e.to_string())?;
         match token {
-            Token::ElementStart { local, .. } => {
-                let name = local.as_str().to_string();
+            Token::ElementStart { prefix, local, .. } => {
+                let name = if prefix.is_empty() {
+                    local.as_str().to_string()
+                } else {
+                    format!("{}:{}", prefix.as_str(), local.as_str())
+                };
                 let element = Element::new(name);
                 element_stack.push(element);
             }
-            Token::Attribute { local, value, .. } => {
+            Token::Attribute {
+                prefix,
+                local,
+                value,
+                ..
+            } => {
                 if let Some(current) = element_stack.last_mut() {
-                    current
-                        .attributes
-                        .insert(local.as_str().to_string(), value.as_str().to_string());
+                    let key = if prefix.is_empty() {
+                        local.as_str().to_string()
+                    } else {
+                        format!("{}:{}", prefix.as_str(), local.as_str())
+                    };
+                    current.attributes.insert(key, value.as_str().to_string());
                 }
             }
             Token::ElementEnd { end, .. } => {

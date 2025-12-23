@@ -1,5 +1,5 @@
 use crate::plugins::Plugin;
-use crate::tree::{Document, Element, Node};
+use crate::tree::{Document, Node};
 use std::collections::HashSet;
 
 pub struct RemoveEditorsNSData;
@@ -117,11 +117,6 @@ mod tests {
 
         // For accurate string comparison, checking logic specifically
         let output = printer::print(&doc);
-        // We verify the attributes are gone and the element is gone.
-        // The regex check might be easier or constructing a clean input.
-        assert!(!output.contains("xmlns:inkscape"));
-        assert!(!output.contains("sodipodi:namedview"));
-        assert!(!output.contains("inkscape:label"));
-        assert!(output.contains("<rect width=\"10\" height=\"10\""));
+        assert_eq!(output, expected);
     }
 }

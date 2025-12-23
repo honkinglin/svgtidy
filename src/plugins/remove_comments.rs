@@ -17,3 +17,22 @@ fn remove_comments_from_nodes(nodes: &mut Vec<Node>) {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::parser;
+    use crate::printer;
+
+    #[test]
+    fn test_remove_comments() {
+        let input = "<svg><!-- Comment 1 --><rect/><g><!-- Comment 2 --></g></svg>";
+        let expected = "<svg><rect/><g/></svg>";
+
+        let mut doc = parser::parse(input).unwrap();
+        RemoveComments.apply(&mut doc);
+        let output = printer::print(&doc);
+
+        assert_eq!(output, expected);
+    }
+}
