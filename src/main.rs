@@ -3,8 +3,8 @@ use std::fs;
 use std::path::PathBuf;
 use svgx::parser;
 use svgx::plugins::{
-    CleanupAttrs, Plugin, RemoveComments, RemoveDoctype, RemoveEditorsNSData, RemoveMetadata,
-    RemoveXMLProcInst,
+    CleanupAttrs, Plugin, RemoveComments, RemoveDoctype, RemoveEditorsNSData, RemoveEmptyText,
+    RemoveHiddenElems, RemoveMetadata, RemoveXMLProcInst,
 };
 use svgx::printer;
 
@@ -27,8 +27,6 @@ fn main() {
     match parser::parse(&text) {
         Ok(mut doc) => {
             // Apply plugins
-            // Order matters: structural cleaning first, then content cleaning
-            // Note: RemoveEditorsNSData should probably run early to remove large chunks of unused data
             let plugins: Vec<Box<dyn Plugin>> = vec![
                 Box::new(RemoveDoctype),
                 Box::new(RemoveXMLProcInst),
@@ -36,6 +34,9 @@ fn main() {
                 Box::new(RemoveMetadata),
                 Box::new(RemoveEditorsNSData),
                 Box::new(CleanupAttrs),
+                // Content cleaning
+                Box::new(RemoveHiddenElems),
+                Box::new(RemoveEmptyText),
             ];
 
             for plugin in plugins {

@@ -92,15 +92,7 @@ mod tests {
 
     #[test]
     fn test_remove_editors_ns_data() {
-        let input = r#"
-        <svg xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" 
-             xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
-             inkscape:version="1.0"
-             width="100">
-            <sodipodi:namedview id="base"/>
-            <rect width="10" height="10" inkscape:label="rect1"/>
-        </svg>
-        "#;
+        let input = r#"<svg xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd" inkscape:version="1.0" width="100"><sodipodi:namedview id="base"/><rect width="10" height="10" inkscape:label="rect1"/></svg>"#;
 
         // Should remove xmlns declarations, sodipodi element, inkscape attributes
         let expected = "<svg width=\"100\"><rect width=\"10\" height=\"10\"/></svg>";
