@@ -3,8 +3,8 @@ use std::fs;
 use std::path::PathBuf;
 use svgx::parser;
 use svgx::plugins::{
-    CleanupAttrs, Plugin, RemoveComments, RemoveDoctype, RemoveEditorsNSData, RemoveEmptyText,
-    RemoveHiddenElems, RemoveMetadata, RemoveXMLProcInst,
+    CleanupAttrs, ConvertColors, Plugin, RemoveComments, RemoveDoctype, RemoveEditorsNSData,
+    RemoveEmptyText, RemoveHiddenElems, RemoveMetadata, RemoveXMLProcInst,
 };
 use svgx::printer;
 
@@ -34,9 +34,9 @@ fn main() {
                 Box::new(RemoveMetadata),
                 Box::new(RemoveEditorsNSData),
                 Box::new(CleanupAttrs),
-                // Content cleaning
                 Box::new(RemoveHiddenElems),
                 Box::new(RemoveEmptyText),
+                Box::new(ConvertColors),
             ];
 
             for plugin in plugins {

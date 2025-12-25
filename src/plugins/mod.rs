@@ -5,6 +5,7 @@ pub trait Plugin {
 }
 
 pub mod cleanup_attrs;
+pub mod convert_colors;
 pub mod remove_comments;
 pub mod remove_doctype;
 pub mod remove_editors_ns_data;
@@ -14,6 +15,7 @@ pub mod remove_metadata;
 pub mod remove_xml_proc_inst;
 
 pub use cleanup_attrs::CleanupAttrs;
+pub use convert_colors::ConvertColors;
 pub use remove_comments::RemoveComments;
 pub use remove_doctype::RemoveDoctype;
 pub use remove_editors_ns_data::RemoveEditorsNSData;
