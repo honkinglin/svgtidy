@@ -3,9 +3,9 @@ use std::fs;
 use std::path::PathBuf;
 use svgx::parser;
 use svgx::plugins::{
-    CleanupAttrs, CleanupIds, ConvertColors, Plugin, RemoveComments, RemoveDoctype,
-    RemoveEditorsNSData, RemoveEmptyText, RemoveHiddenElems, RemoveMetadata, RemoveUselessDefs,
-    RemoveXMLProcInst,
+    CleanupAttrs, CleanupIds, CleanupNumericValues, CollapseGroups, ConvertColors, Plugin,
+    RemoveComments, RemoveDoctype, RemoveEditorsNSData, RemoveEmptyText, RemoveHiddenElems,
+    RemoveMetadata, RemoveUselessDefs, RemoveXMLProcInst,
 };
 use svgx::printer;
 
@@ -28,6 +28,7 @@ fn main() {
     match parser::parse(&text) {
         Ok(mut doc) => {
             // Apply plugins
+            // Note: Plugin application order can be optimized.
             let plugins: Vec<Box<dyn Plugin>> = vec![
                 Box::new(RemoveDoctype),
                 Box::new(RemoveXMLProcInst),
@@ -35,25 +36,14 @@ fn main() {
                 Box::new(RemoveMetadata),
                 Box::new(RemoveEditorsNSData),
                 Box::new(CleanupAttrs),
-                // Cleanup IDs and Defs (IDs first to mark used? No.
-                // If we run CleanupIds first, it removes IDs that are unused.
-                // If we run RemoveUselessDefs first, it removes defs children that are unused.
-                // Ideally:
-                // 1. RemoveUselessDefs: removes elements in defs that are not referenced.
-                // 2. CleanupIds: removes IDs on other elements that are not referenced.
-                // Actually if an element in defs is removed, its ID is gone.
-                // If we run CleanupIds, we strip ID from element.
-                // Order: RemoveUselessDefs -> CleanupIds might be better?
-                // Or maybe CleanupIds should treat defs children specially?
-                // svgo: cleanupIds happens, then removeUselessDefs.
-                // Wait, if cleanupIds removes the ID from a rect in defs (because unused),
-                // then removeUselessDefs sees a rect without ID in defs -> removes it.
-                // So CleanupIds effectively enables RemoveUselessDefs to kill it.
                 Box::new(CleanupIds),
                 Box::new(RemoveUselessDefs),
                 Box::new(RemoveHiddenElems),
                 Box::new(RemoveEmptyText),
+                // Group collapse should happen after cleaning up empty things
+                Box::new(CollapseGroups),
                 Box::new(ConvertColors),
+                Box::new(CleanupNumericValues::default()),
             ];
 
             for plugin in plugins {
