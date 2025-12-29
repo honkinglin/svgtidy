@@ -3,9 +3,10 @@ use std::fs;
 use std::path::PathBuf;
 use svgx::parser;
 use svgx::plugins::{
-    CleanupAttrs, CleanupIds, CleanupNumericValues, CollapseGroups, ConvertColors, Plugin,
-    RemoveComments, RemoveDoctype, RemoveEditorsNSData, RemoveEmptyText, RemoveHiddenElems,
-    RemoveMetadata, RemoveUselessDefs, RemoveXMLProcInst,
+    CleanupAttrs, CleanupIds, CleanupNumericValues, CollapseGroups, ConvertColors,
+    ConvertShapeToPath, Plugin, RemoveComments, RemoveDoctype, RemoveEditorsNSData,
+    RemoveEmptyAttrs, RemoveEmptyText, RemoveHiddenElems, RemoveMetadata, RemoveUselessDefs,
+    RemoveXMLProcInst,
 };
 use svgx::printer;
 
@@ -28,7 +29,7 @@ fn main() {
     match parser::parse(&text) {
         Ok(mut doc) => {
             // Apply plugins
-            // Note: Plugin application order can be optimized.
+            // Note: Plugin application order matters.
             let plugins: Vec<Box<dyn Plugin>> = vec![
                 Box::new(RemoveDoctype),
                 Box::new(RemoveXMLProcInst),
@@ -36,14 +37,17 @@ fn main() {
                 Box::new(RemoveMetadata),
                 Box::new(RemoveEditorsNSData),
                 Box::new(CleanupAttrs),
+                Box::new(RemoveEmptyAttrs), // New: Clean attrs early?
                 Box::new(CleanupIds),
                 Box::new(RemoveUselessDefs),
                 Box::new(RemoveHiddenElems),
                 Box::new(RemoveEmptyText),
-                // Group collapse should happen after cleaning up empty things
                 Box::new(CollapseGroups),
+                // Convert shapes before numeric cleanup (because shapes might have numbers that need converting first, but actually better to convert shapes then clean up their path data later)
+                // Actually convert shapes produces new attributes (d).
+                Box::new(ConvertShapeToPath),
                 Box::new(ConvertColors),
-                Box::new(CleanupNumericValues::default()),
+                Box::new(CleanupNumericValues::default()), // Cleans numbers in all attrs, including d from paths
             ];
 
             for plugin in plugins {

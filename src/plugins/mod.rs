@@ -20,6 +20,9 @@ pub mod collapse_groups;
 pub mod collections;
 pub mod remove_useless_defs;
 
+pub mod convert_shape_to_path;
+pub mod remove_empty_attrs;
+
 pub use cleanup_attrs::CleanupAttrs;
 pub use convert_colors::ConvertColors;
 pub use remove_comments::RemoveComments;
@@ -34,3 +37,6 @@ pub use cleanup_ids::CleanupIds;
 pub use cleanup_numeric_values::CleanupNumericValues;
 pub use collapse_groups::CollapseGroups;
 pub use remove_useless_defs::RemoveUselessDefs;
+
+pub use convert_shape_to_path::ConvertShapeToPath;
+pub use remove_empty_attrs::RemoveEmptyAttrs;
