@@ -5,9 +5,10 @@ use svgx::parser;
 use svgx::plugins::{
     CleanupAttrs, CleanupIds, CleanupListOfValues, CleanupNumericValues, CollapseGroups,
     ConvertColors, ConvertPathData, ConvertShapeToPath, ConvertStyleToAttrs, ConvertTransform,
-    MergePaths, Plugin, RemoveComments, RemoveDesc, RemoveDoctype, RemoveEditorsNSData,
-    RemoveEmptyAttrs, RemoveEmptyText, RemoveHiddenElems, RemoveMetadata, RemoveTitle,
-    RemoveUnknownsAndDefaults, RemoveUselessDefs, RemoveXMLProcInst, SortAttrs,
+    MergePaths, Plugin, RemoveComments, RemoveDesc, RemoveDimensions, RemoveDoctype,
+    RemoveEditorsNSData, RemoveEmptyAttrs, RemoveEmptyText, RemoveHiddenElems, RemoveMetadata,
+    RemoveRasterImages, RemoveScriptElement, RemoveTitle, RemoveUnknownsAndDefaults,
+    RemoveUselessDefs, RemoveXMLProcInst, SortAttrs,
 };
 use svgx::printer;
 
@@ -39,8 +40,11 @@ fn main() {
                 Box::new(RemoveTitle),
                 Box::new(RemoveDesc),
                 Box::new(RemoveEditorsNSData),
+                Box::new(RemoveScriptElement), // Safety first
+                Box::new(RemoveRasterImages),
                 Box::new(ConvertStyleToAttrs),
                 Box::new(CleanupAttrs),
+                Box::new(RemoveDimensions), // Make responsive if checking viewBox
                 Box::new(CleanupIds),
                 Box::new(RemoveUselessDefs),
                 Box::new(RemoveHiddenElems),
@@ -52,10 +56,10 @@ fn main() {
                 Box::new(MergePaths),
                 Box::new(ConvertColors),
                 Box::new(CleanupNumericValues::default()),
-                Box::new(CleanupListOfValues::default()), // Clean lists (viewBox)
-                Box::new(RemoveUnknownsAndDefaults::default()), // Remove defaults last (after numerical cleanup to match 0 vs 0.0)
-                Box::new(RemoveEmptyAttrs),                     // Clean empty last
-                Box::new(SortAttrs), // Final Sort for deterministic output and compression
+                Box::new(CleanupListOfValues::default()),
+                Box::new(RemoveUnknownsAndDefaults::default()),
+                Box::new(RemoveEmptyAttrs),
+                Box::new(SortAttrs),
             ];
 
             for plugin in plugins {

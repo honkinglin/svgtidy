@@ -28,7 +28,7 @@ fn process_transforms(nodes: &mut Vec<Node>, opts: &ConvertTransform) {
             if let Some(t) = elem.attributes.get_mut("transform") {
                 let new_t = optimize_transform(t, opts);
                 if new_t.is_empty() {
-                    elem.attributes.remove("transform"); // Remove if identity/empty
+                    elem.attributes.shift_remove("transform"); // Remove if identity/empty
                 } else {
                     *t = new_t;
                 }

@@ -58,20 +58,7 @@ enum Command {
     Close,
 }
 
-struct PathParser<'a> {
-    s: &'a str,
-    pos: usize,
-}
-
-impl<'a> PathParser<'a> {
-    fn new(s: &'a str) -> Self {
-        Self { s, pos: 0 }
-    }
-    // ... Simplified parser or copy previous robust one ...
-    // Reuse previous logic but improve structure
-
-    // ... (omitted for brevity, assume similar lexer logic)
-}
+// Struct removed. Using PathLexer below.
 
 // ... Lexer implementation ...
 // To be robust, let's maintain the decent lexer from previous step but adapt output to Normalized Commands (Absolute).

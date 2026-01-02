@@ -34,6 +34,10 @@ pub mod cleanup_list_of_values;
 pub mod remove_unknowns_and_defaults;
 pub mod sort_attrs;
 
+pub mod remove_dimensions;
+pub mod remove_raster_images;
+pub mod remove_script_element;
+
 pub use cleanup_attrs::CleanupAttrs;
 pub use convert_colors::ConvertColors;
 pub use remove_comments::RemoveComments;
@@ -62,3 +66,7 @@ pub use merge_paths::MergePaths;
 pub use cleanup_list_of_values::CleanupListOfValues;
 pub use remove_unknowns_and_defaults::RemoveUnknownsAndDefaults;
 pub use sort_attrs::SortAttrs;
+
+pub use remove_dimensions::RemoveDimensions;
+pub use remove_raster_images::RemoveRasterImages;
+pub use remove_script_element::RemoveScriptElement;
