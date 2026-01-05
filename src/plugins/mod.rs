@@ -42,6 +42,10 @@ pub mod convert_ellipse_to_circle;
 pub mod remove_style_element;
 pub mod remove_useless_stroke_and_fill;
 
+pub mod convert_one_stop_gradients;
+pub mod move_elems_attrs_to_group;
+pub mod move_group_attrs_to_elems;
+
 pub use cleanup_attrs::CleanupAttrs;
 pub use convert_colors::ConvertColors;
 pub use remove_comments::RemoveComments;
@@ -78,3 +82,7 @@ pub use remove_script_element::RemoveScriptElement;
 pub use convert_ellipse_to_circle::ConvertEllipseToCircle;
 pub use remove_style_element::RemoveStyleElement;
 pub use remove_useless_stroke_and_fill::RemoveUselessStrokeAndFill;
+
+pub use convert_one_stop_gradients::ConvertOneStopGradients;
+pub use move_elems_attrs_to_group::MoveElemsAttrsToGroup;
+pub use move_group_attrs_to_elems::MoveGroupAttrsToElems;
