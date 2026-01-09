@@ -529,7 +529,10 @@ dependencies = [
  "clap",
  "criterion",
  "indexmap",
+ "rayon",
  "regex",
+ "walkdir",
+ "wasm-bindgen",
  "xmlparser",
 ]
 

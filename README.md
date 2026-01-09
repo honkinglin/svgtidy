@@ -11,17 +11,35 @@
 ### CLI
 
 ```bash
-# Optimize strict to stdout
+# Optimize strictly to stdout
 svgx input.svg
 
 # Optimize to file
 svgx input.svg -o output.svg
+
+# Batch Processing (Directory)
+# Recursively finds all .svg files in `input_dir` and mirrors structure to `output_dir`
+# Uses parallel processing (rayon) for maximum speed.
+svgx input_dir -o output_dir
 
 # Set precision (default 3)
 svgx input.svg -o output.svg -p 5
 
 # Customize plugins
 svgx input.svg --disable removeTitle,removeDesc --enable removeStyleElement
+```
+
+### WebAssembly (WASM)
+
+`svgx` can be compiled to WASM for use in the browser.
+
+```bash
+wasm-pack build --target web
+```
+
+Exposes:
+```rust
+pub fn optimize(svg: &str) -> String;
 ```
 
 ## Performance
@@ -35,6 +53,8 @@ Benchmarks run on MacBook Pro (M3):
 
 ## Features
 
+- **Blazing Fast**: Built with Rust, `xmlparser`, and `rayon`.
+- **Batch Processing**: Parallel directory scanning and optimization.
 - **AST-based**: Full DOM-like mutation capabilities.
 - **Lossy & Lossless**: Configurable optimization levels.
 - **Batched Plugins**:
@@ -47,79 +67,21 @@ Benchmarks run on MacBook Pro (M3):
 
 - [x] Core Plugins (Parity with SVGO)
 - [x] CLI Interface
-- [ ] Parallel Processing (Rayon)
-- [ ] Watch Mode
-- [ ] WebAssembly (WASM) Support
-
-## 🚀 Features
-
-- **Blazing Fast**: Built with Rust and `xmlparser` for minimal overhead.
-- **AST-based Optimization**: Parses SVG into a DOM-like structure to apply robust transformations.
-- **Plugin System**: Modular architecture for optimization passes.
-    - `removeComments`: Removes comments from SVG files.
-    - *(More plugins coming soon)*
-- **CLI**: Simple command-line interface.
-
-## 📦 Installation
-
-Ensure you have [Rust installed](https://www.rust-lang.org/tools/install).
-
-```bash
-git clone https://github.com/yourusername/svgx.git
-cd svgx
-cargo build --release
-```
-
-## 🛠 Usage
-
-Run the `svgx` binary with an input file:
-
-```bash
-# Print optimized SVG to stdout
-cargo run --release -- input.svg
-
-# Write optimized SVG to a file
-cargo run --release -- input.svg -o output.svg
-```
-
-### Example
-
-**Input (`test.svg`):**
-```xml
-<svg width="100" height="100">
-    <!-- This is a comment -->
-    <rect width="100" height="100" fill="red" />
-</svg>
-```
-
-**Command:**
-```bash
-cargo run -- test.svg
-```
-
-**Output:**
-```xml
-<svg width="100" height="100">
-    <rect width="100" height="100" fill="red"/>
-</svg>
-```
+- [x] Parallel Processing (Rayon)
+- [x] Batch Processing
+- [x] WebAssembly (WASM) Support
 
 ## 🏗 Architecture
 
 - **`src/parser.rs`**: Pull-based XML parser converting SVG to an internal AST.
 - **`src/tree.rs`**: AST definitions (Document, Element, Node).
-- **`src/plugins/`**: collection of optimization plugins implementing the `Plugin` trait.
+- **`src/plugins/`**: Modular optimization passes.
 - **`src/printer.rs`**: Serializes the AST back to a minimized SVG string.
+- **`src/lib.rs`**: Library entry point (WASM compatible).
 
 ## 🤝 Contributing
 
 Contributions are welcome! Please feel free to open issues or submit pull requests.
-
-1. Fork the repo.
-2. Create your feature branch (`git checkout -b feature/amazing-feature`).
-3. Commit your changes.
-4. Push to the branch.
-5. Open a Pull Request.
 
 ## 📄 License
 
