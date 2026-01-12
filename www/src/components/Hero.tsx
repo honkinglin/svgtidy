@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { ArrowRight, Zap, Globe, Cpu } from 'lucide-react';
 import './Hero.css';
 
@@ -22,9 +23,9 @@ export function Hero() {
             <button className="btn btn-primary" onClick={scrollToPlayground}>
               Try Online <ArrowRight size={18} />
             </button>
-            <a href="https://github.com/honkinglin/svgtidy" className="btn btn-outline" target='_blank'>
+            <Link to="/docs" className="btn btn-outline">
               Documentation
-            </a>
+            </Link>
           </div>
         </div>
         

@@ -1,4 +1,4 @@
-# svgtidy
+# ![Logo](logo.svg)
 
 ![CI](https://github.com/honkinglin/svgx/actions/workflows/ci.yml/badge.svg)
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
