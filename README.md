@@ -27,11 +27,15 @@ Ensure you have [Rust](https://www.rust-lang.org/tools/install) installed.
 ```bash
 git clone https://github.com/honkinglin/svgx.git
 cd svgx
+cargo install --path .
+```
+This will compile the project and install the `svgx` binary to your Cargo bin directory (usually `~/.cargo/bin`). Ensure this directory is in your `PATH`.
+
+Alternatively, to build without installing:
+```bash
 cargo build --release
 # Binary will be at ./target/release/svgx
 ```
-
-*(Eventually, `cargo install svgx` will be supported)*
 
 ## 🛠 Usage
 
@@ -145,4 +149,4 @@ Contributions are welcome!
 
 ## 📄 License
 
-MIT
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

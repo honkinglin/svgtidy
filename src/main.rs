@@ -2,7 +2,7 @@ use clap::Parser;
 use rayon::prelude::*;
 use std::collections::HashSet;
 use std::fs;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use svgx::parser;
 use svgx::plugins::{
     CleanupAttrs, CleanupIds, CleanupListOfValues, CleanupNumericValues, CollapseGroups,
