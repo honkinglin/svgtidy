@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 120">
+  <defs>
+    <style>
+      .text {
+        font-family: 'Verdana', sans-serif;
+        font-weight: bold;
+        font-size: 60px;
+        fill: #333;
+      }
+
+      .hammer-head {
+        fill: #95a5a6;
+      }
+
+      /* Metal Grey */
+      .hammer-handle {
+        fill: #d35400;
+      }
+
+      /* Wood Brown (Darker/Reddish like emoji) */
+    </style>
+  </defs>
+
+  <!-- "svg" -->
+  <text x="50" y="80" class="text">svg</text>
+
+  <!-- The Hammer 'T' -->
+  <!-- Shifted right to 185 (was 175) to give space from g -->
+  <g transform="translate(185, 80) rotate(-15)">
+
+    <!-- Handle -->
+    <path d="M -5 -45 L -7 10 L 7 10 L 5 -45 Z" class="hammer-handle" />
+
+    <!-- Head -->
+    <!-- Left part (Face) -->
+    <path d="M -8 -45 L -8 -60 L -18 -60 L -18 -49 L -12 -45 Z" class="hammer-head" />
+
+    <!-- Right part (Claw) -->
+    <path d="M 8 -45 L 8 -55 Q 8 -60 15 -60 L 25 -60 Q 30 -60 30 -55 L 25 -40 Q 20 -45 8 -45 Z" class="hammer-head" />
+
+    <!-- Center joint -->
+    <rect x="-8" y="-60" width="16" height="15" class="hammer-head" />
+
+  </g>
+
+  <!-- "idy" -->
+  <!-- Shifted left to 210 (was 215) to be closer to hammer -->
+  <text x="210" y="80" class="text">idy</text>
+
+</svg>
