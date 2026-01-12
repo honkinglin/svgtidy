@@ -1,7 +1,10 @@
 import { useState, useMemo, useDeferredValue } from 'react';
 import { optimize } from 'svgtidy';
 import { Copy, Check, FileCode, Image as ImageIcon } from 'lucide-react';
-
+import Editor from 'react-simple-code-editor';
+import { highlight, languages } from 'prismjs';
+import 'prismjs/components/prism-markup';
+import 'prismjs/themes/prism-tomorrow.css'; // Use a dark theme by default or handle custom styles
 
 const DEFAULT_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
   <!-- This is a comment that will be removed -->
@@ -57,13 +60,23 @@ export function Playground() {
               <span className="font-semibold text-sm">Input SVG</span>
               <span className="text-xs px-2 py-1 bg-border rounded text-text-muted font-mono">{stats.original} bytes</span>
             </div>
-            <textarea 
-              className="flex-1 w-full p-4 font-mono text-sm leading-relaxed bg-transparent border-none resize-none outline-none focus:ring-0 text-text" 
-              value={input} 
-              onChange={(e) => setInput(e.target.value)}
-              placeholder="Paste SVG code here..."
-              spellCheck={false}
-            />
+            <div className="flex-1 w-full relative bg-[#282c34] overflow-auto">
+                <Editor
+                    value={input}
+                    onValueChange={code => setInput(code)}
+                    highlight={code => highlight(code, languages.markup, 'markup')}
+                    padding={20}
+                    className="font-mono text-sm leading-relaxed min-h-full"
+                    style={{
+                        fontFamily: '"Fira Code", "Fira Mono", monospace',
+                        fontSize: 14,
+                        backgroundColor: '#282c34', // Force dark background for contrast
+                        color: '#abb2bf',
+                        minHeight: '100%'
+                    }}
+                    textareaId="input-editor"
+                />
+            </div>
           </div>
 
           {/* Output Panel */}
@@ -110,11 +123,23 @@ export function Playground() {
                             dangerouslySetInnerHTML={{ __html: output }} 
                         />
                     ) : (
-                        <textarea 
-                            className="flex-1 w-full p-4 font-mono text-sm leading-relaxed bg-black/5 dark:bg-white/5 border-none resize-none outline-none text-text" 
-                            value={output} 
-                            readOnly 
-                        />
+                        <div className="flex-1 w-full relative bg-[#282c34] overflow-auto">
+                            <Editor 
+                                value={output} 
+                                onValueChange={() => {}} 
+                                highlight={code => highlight(code, languages.markup, 'markup')}
+                                padding={20}
+                                className="font-mono text-sm leading-relaxed min-h-full"
+                                style={{
+                                    fontFamily: '"Fira Code", "Fira Mono", monospace',
+                                    fontSize: 14,
+                                    backgroundColor: '#282c34',
+                                    color: '#abb2bf',
+                                    minHeight: '100%'
+                                }}
+                                readOnly
+                            />
+                        </div>
                     )
                 )}
             </div>
