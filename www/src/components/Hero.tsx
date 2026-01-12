@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { ArrowRight, Zap, Globe, Cpu } from 'lucide-react';
-import './Hero.css';
+
 
 export function Hero() {
   const scrollToPlayground = () => {
@@ -8,42 +8,54 @@ export function Hero() {
   };
 
   return (
-    <section className="hero">
-      <div className="container hero-inner">
-        <div className="hero-content">
-          <h1 className="hero-title">
+    <section className="py-20 text-center">
+      <div className="container mx-auto px-5 flex flex-col items-center gap-16">
+        <div className="max-w-4xl">
+          <h1 className="text-5xl md:text-7xl font-extrabold tracking-tight mb-6 leading-tight text-text">
             Optimize your SVGs <br/>
-            <span className="highlight">lightning fast.</span>
+            <span className="text-transparent bg-clip-text bg-gradient-to-br from-primary to-orange-500">lightning fast.</span>
           </h1>
-          <p className="hero-subtitle">
+          <p className="text-xl md:text-2xl text-text-muted max-w-2xl mx-auto mb-10 leading-relaxed">
             A high-performance SVG optimizer written in Rust. 
             Available as a CLI, generic library, and WebAssembly module.
           </p>
-          <div className="hero-actions">
-            <button className="btn btn-primary" onClick={scrollToPlayground}>
-              Try Online <ArrowRight size={18} />
+          <div className="flex flex-wrap gap-4 justify-center">
+            <button 
+                className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-white rounded-lg font-semibold hover:bg-primary-dark transition-colors shadow-lg hover:shadow-xl hover:-translate-y-0.5" 
+                onClick={scrollToPlayground}
+            >
+              Try Online <ArrowRight size={20} />
             </button>
-            <Link to="/docs" className="btn btn-outline">
+            <Link 
+                to="/docs" 
+                className="inline-flex items-center gap-2 px-6 py-3 bg-transparent border border-border text-text rounded-lg font-semibold hover:bg-surface hover:border-text transition-all"
+            >
               Documentation
             </Link>
           </div>
         </div>
         
-        <div className="features-grid">
-            <div className="feature-card">
-                <Zap className="feature-icon" />
-                <h3>Blazing Fast</h3>
-                <p>Up to 100x faster than traditional tools thanks to Rust.</p>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full mt-5 text-left">
+            <div className="bg-surface p-8 rounded-2xl border border-border transition-all hover:-translate-y-1 hover:shadow-lg group">
+                <div className="mb-4 text-primary bg-primary/10 w-fit p-3 rounded-xl group-hover:scale-110 transition-transform duration-300">
+                    <Zap className="w-8 h-8" />
+                </div>
+                <h3 className="text-xl font-bold mb-3 text-text">Blazing Fast</h3>
+                <p className="text-text-muted leading-relaxed">Up to 100x faster than traditional tools thanks to Rust's zero-cost abstractions.</p>
             </div>
-             <div className="feature-card">
-                <Globe className="feature-icon" />
-                <h3>WebAssembly</h3>
-                <p>Runs directly in your browser or Node.js edge environment.</p>
+             <div className="bg-surface p-8 rounded-2xl border border-border transition-all hover:-translate-y-1 hover:shadow-lg group">
+                <div className="mb-4 text-primary bg-primary/10 w-fit p-3 rounded-xl group-hover:scale-110 transition-transform duration-300">
+                    <Globe className="w-8 h-8" />
+                </div>
+                <h3 className="text-xl font-bold mb-3 text-text">WebAssembly</h3>
+                <p className="text-text-muted leading-relaxed">Runs directly in your browser or Node.js edge environment with near-native performance.</p>
             </div>
-             <div className="feature-card">
-                <Cpu className="feature-icon" />
-                <h3>AST Based</h3>
-                <p>Safe, robust DOM mutations rather than regex tricks.</p>
+             <div className="bg-surface p-8 rounded-2xl border border-border transition-all hover:-translate-y-1 hover:shadow-lg group">
+                <div className="mb-4 text-primary bg-primary/10 w-fit p-3 rounded-xl group-hover:scale-110 transition-transform duration-300">
+                    <Cpu className="w-8 h-8" />
+                </div>
+                <h3 className="text-xl font-bold mb-3 text-text">AST Based</h3>
+                <p className="text-text-muted leading-relaxed">Safe, robust DOM mutations rather than regex tricks. Ensures 100% valid SVG output.</p>
             </div>
         </div>
       </div>

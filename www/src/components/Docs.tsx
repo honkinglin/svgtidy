@@ -1,6 +1,6 @@
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import './Docs.css';
+
 
 // Import raw README content via Vite
 import readmeContent from '../../../README.md?raw';
@@ -10,8 +10,8 @@ export function Docs() {
   const content = readmeContent;
 
   return (
-    <div className="container docs-container">
-      <div className="docs-content">
+    <div className="container mx-auto px-5 py-12 max-w-4xl">
+      <div className="prose prose-lg prose-slate dark:prose-invert max-w-none">
         <ReactMarkdown 
             remarkPlugins={[remarkGfm]}
             components={{

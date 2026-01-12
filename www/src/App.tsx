@@ -24,14 +24,8 @@ function App() {
         <Route path="/" element={<Home />} />
         <Route path="/docs" element={<Docs />} />
       </Routes>
-      <footer style={{
-        textAlign: 'center', 
-        padding: '40px', 
-        color: 'var(--color-text-muted)',
-        borderTop: '1px solid var(--color-border)',
-        marginTop: 'auto'
-      }}>
-        <div className="container">
+      <footer className="text-center py-10 text-text-muted border-t border-border mt-auto">
+        <div className="container mx-auto px-5">
           <p>© {new Date().getFullYear()} SvgTidy. MIT License.</p>
         </div>
       </footer>
