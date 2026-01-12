@@ -1,0 +1,14 @@
+{
+  "name": "svgtidy-npm-root",
+  "private": true,
+  "scripts": {
+    "test:wasm": "node test-wasm.mjs",
+    "test:suite": "node test-suite.mjs"
+  },
+  "workspaces": [
+    "svgtidy-wasm",
+    "svgtidy-loader",
+    "vite-plugin-svgtidy",
+    "examples/*"
+  ]
+}
