@@ -3,8 +3,8 @@ use rayon::prelude::*;
 use std::collections::HashSet;
 use std::fs;
 use std::path::PathBuf;
-use svgx::parser;
-use svgx::plugins::{
+use svgtidy::parser;
+use svgtidy::plugins::{
     CleanupAttrs, CleanupIds, CleanupListOfValues, CleanupNumericValues, CollapseGroups,
     ConvertColors, ConvertEllipseToCircle, ConvertOneStopGradients, ConvertPathData,
     ConvertShapeToPath, ConvertStyleToAttrs, ConvertTransform, MergePaths, MoveElemsAttrsToGroup,
@@ -14,7 +14,7 @@ use svgx::plugins::{
     RemoveTitle, RemoveUnknownsAndDefaults, RemoveUnusedNS, RemoveUselessDefs,
     RemoveUselessStrokeAndFill, RemoveXMLProcInst, SortAttrs, SortDefsChildren,
 };
-use svgx::printer;
+use svgtidy::printer;
 use walkdir::WalkDir;
 
 #[derive(Parser, Debug, Clone)]

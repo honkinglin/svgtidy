@@ -1,6 +1,6 @@
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
-use svgx::parser;
-use svgx::plugins::{
+use svgtidy::parser;
+use svgtidy::plugins::{
     CleanupAttrs, CleanupIds, CleanupListOfValues, CleanupNumericValues, CollapseGroups,
     ConvertColors, ConvertEllipseToCircle, ConvertOneStopGradients, ConvertPathData,
     ConvertShapeToPath, ConvertStyleToAttrs, ConvertTransform, MergePaths, MoveElemsAttrsToGroup,
@@ -10,7 +10,7 @@ use svgx::plugins::{
     RemoveTitle, RemoveUnknownsAndDefaults, RemoveUnusedNS, RemoveUselessDefs,
     RemoveUselessStrokeAndFill, RemoveXMLProcInst, SortAttrs, SortDefsChildren,
 };
-use svgx::printer;
+use svgtidy::printer;
 
 fn get_complex_svg() -> String {
     let mut s =

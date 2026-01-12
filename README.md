@@ -1,13 +1,13 @@
-# svgx
+# svgtidy
 
 ![CI](https://github.com/honkinglin/svgx/actions/workflows/ci.yml/badge.svg)
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 
-> **svgx** is a high-performance SVG optimizer written in Rust.
+> **svgtidy** is a high-performance SVG optimizer written in Rust.
 
 It removes redundant information from SVG files (like comments, metadata, and hidden elements) and creates a minimized, cleaner version without affecting rendering.
 
-Compared to [SVGO](https://github.com/svg/svgo), `svgx` is **fast**—up to 100x faster for single icons and 50x faster for complex files.
+Compared to [SVGO](https://github.com/svg/svgo), `svgtidy` is **fast**—up to 100x faster for single icons and 50x faster for complex files.
 
 ---
 
@@ -26,15 +26,15 @@ Ensure you have [Rust](https://www.rust-lang.org/tools/install) installed.
 ### From Source
 ```bash
 git clone https://github.com/honkinglin/svgx.git
-cd svgx
+cd svgtidy
 cargo install --path .
 ```
-This will compile the project and install the `svgx` binary to your Cargo bin directory (usually `~/.cargo/bin`). Ensure this directory is in your `PATH`.
+This will compile the project and install the `svgtidy` binary to your Cargo bin directory (usually `~/.cargo/bin`). Ensure this directory is in your `PATH`.
 
 Alternatively, to build without installing:
 ```bash
 cargo build --release
-# Binary will be at ./target/release/svgx
+# Binary will be at ./target/release/svgtidy
 ```
 
 ## 🛠 Usage
@@ -43,27 +43,27 @@ cargo build --release
 
 **Basic Optimization**
 ```bash
-svgx input.svg -o output.svg
+svgtidy input.svg -o output.svg
 ```
 
 **Directory (Batch) Mode**
 Recursively optimizes all SVGs in `icons/` and saves them to `dist/`, maintaining directory structure.
 ```bash
-svgx icons/ -o dist/
+svgtidy icons/ -o dist/
 ```
 
 **Customization**
 ```bash
 # Set numeric precision to 5 decimal places
-svgx input.svg -o output.svg -p 5
+svgtidy input.svg -o output.svg -p 5
 
 # Enable/Disable specific plugins
-svgx input.svg --disable removeTitle --enable removeStyleElement
+svgtidy input.svg --disable removeTitle --enable removeStyleElement
 ```
 
 ### Full CLI Options
 ```text
-Usage: svgx [OPTIONS] <INPUT>
+Usage: svgtidy [OPTIONS] <INPUT>
 
 Arguments:
   <INPUT>  Input file or directory
@@ -79,7 +79,7 @@ Options:
 
 ## 🔌 Plugins
 
-`svgx` currently supports the following optimization plugins:
+`svgtidy` currently supports the following optimization plugins:
 
 | Plugin Name | Description | Default |
 | :--- | :--- | :--- |
@@ -108,14 +108,14 @@ Options:
 
 Tests performed on a MacBook Pro (M3).
 
-| Scenario | Input Size | svgx Time | vs SVGO (Node) |
+| Scenario | Input Size | svgtidy Time | vs SVGO (Node) |
 | :--- | :--- | :--- | :--- |
 | **Simple Icon** | ~0.5 KB | **~16 µs** | **~100x Faster** |
 | **Complex SVG** | ~30 KB | **~1 ms** | **~50x Faster** |
 
 ## 🕸 WebAssembly (WASM)
 
-`svgx` provides a WASM interface for web usage.
+`svgtidy` provides a WASM interface for web usage.
 
 ```bash
 wasm-pack build --target web
@@ -123,7 +123,7 @@ wasm-pack build --target web
 
 **JS Example:**
 ```javascript
-import init, { optimize } from './pkg/svgx.js';
+import init, { optimize } from './pkg/svgtidy.js';
 
 await init();
 const output = optimize('<svg>...</svg>');
