@@ -10,9 +10,9 @@ use crate::plugins::{
     ConvertShapeToPath, ConvertStyleToAttrs, ConvertTransform, MergePaths, MoveElemsAttrsToGroup,
     MoveGroupAttrsToElems, Plugin, RemoveComments, RemoveDesc, RemoveDimensions, RemoveDoctype,
     RemoveEditorsNSData, RemoveEmptyAttrs, RemoveEmptyContainers, RemoveEmptyText,
-    RemoveHiddenElems, RemoveMetadata, RemoveRasterImages, RemoveScriptElement, RemoveStyleElement,
-    RemoveTitle, RemoveUnknownsAndDefaults, RemoveUnusedNS, RemoveUselessDefs,
-    RemoveUselessStrokeAndFill, RemoveXMLProcInst, SortAttrs, SortDefsChildren,
+    RemoveHiddenElems, RemoveMetadata, RemoveRasterImages, RemoveScriptElement, RemoveTitle,
+    RemoveUnknownsAndDefaults, RemoveUnusedNS, RemoveUselessDefs, RemoveUselessStrokeAndFill,
+    RemoveXMLProcInst, SortAttrs, SortDefsChildren,
 };
 use wasm_bindgen::prelude::*;
 
@@ -28,7 +28,7 @@ pub fn optimize(svg: &str) -> String {
 
     // Helper to create plugin (simplified vs main.rs)
     // We just instantiate directly here.
-    let mut plugins: Vec<Box<dyn Plugin>> = vec![
+    let plugins: Vec<Box<dyn Plugin>> = vec![
         Box::new(RemoveDoctype),
         Box::new(RemoveXMLProcInst),
         Box::new(RemoveComments),
