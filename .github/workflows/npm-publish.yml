@@ -9,6 +9,10 @@ on:
       - "src/**"
       - "Cargo.toml"
 
+permissions:
+  contents: read
+  id-token: write
+
 jobs:
   publish-wasm:
     runs-on: ubuntu-latest
@@ -21,10 +25,15 @@ jobs:
       - name: Get Cargo Version
         id: get-version
         run: |
-          # Extract version from Cargo.toml (assuming standard format)
           VERSION=$(grep '^version = ' Cargo.toml | cut -d '"' -f 2)
           echo "Detected Cargo version: $VERSION"
           echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          registry-url: "https://registry.npmjs.org"
 
       - name: Check if version exists on NPM
         id: check-publish
@@ -55,19 +64,11 @@ jobs:
         if: steps.check-publish.outputs.published == 'true'
         run: wasm-pack build --target web --out-dir npm/svgtidy-wasm
 
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-          registry-url: "https://registry.npmjs.org"
-
-      - name: Publish to NPM
+      - name: Publish to NPM (OIDC)
         if: steps.check-publish.outputs.published == 'true'
         run: |
           cd npm/svgtidy-wasm
-          npm publish
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          npm publish --provenance
 
   publish-plugins:
     needs: publish-wasm
@@ -81,19 +82,14 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "22"
           registry-url: "https://registry.npmjs.org"
 
       - name: Update Dependency
         run: |
-          # Get the WASM version from the local source of truth
           WASM_VERSION="${{ needs.publish-wasm.outputs.wasm_version }}"
-
           echo "Updating ${{ matrix.package }} to use svgtidy@$WASM_VERSION"
-
           cd npm/${{ matrix.package }}
-
-          # Set the dependency alias: imports of 'svgtidy-wasm' will resolve to 'svgtidy' package
           npm pkg set dependencies.svgtidy-wasm="npm:svgtidy@$WASM_VERSION"
 
       - name: Install dependencies
@@ -118,10 +114,8 @@ jobs:
              echo "published=true" >> $GITHUB_OUTPUT
           fi
 
-      - name: Publish
+      - name: Publish (OIDC)
         if: steps.check.outputs.published == 'true'
         run: |
           cd npm/${{ matrix.package }}
-          npm publish
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          npm publish --provenance
