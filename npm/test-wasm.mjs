@@ -1,6 +1,5 @@
 import * as bindings from './svgtidy-wasm/svgtidy_bg.js';
 import fs from 'fs';
-import path from 'path';
 
 async function testWasm() {
     console.log("🧪 Testing WASM Core (Manual Node.js Instantiation)...");
