@@ -34,10 +34,7 @@ npm install svgtidy
 **Usage:**
 
 ```javascript
-import init, { optimize } from 'svgtidy';
-
-// Initialize the WASM module (required once)
-await init();
+import { optimize } from 'svgtidy';
 
 const svg = '<svg>...</svg>';
 const optimized = optimize(svg);
@@ -174,7 +171,7 @@ Tests performed on a MacBook Pro (M3).
 To build the WASM package for web usage (NPM):
 
 ```bash
-wasm-pack build --target web --out-dir npm/svgtidy-wasm
+wasm-pack build --target bundler --out-dir npm/svgtidy-wasm
 ```
 
 ### Running Tests
