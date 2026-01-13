@@ -2,6 +2,7 @@
 
 ![CI](https://github.com/honkinglin/svgx/actions/workflows/ci.yml/badge.svg)
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
+![NPM Version](https://img.shields.io/npm/v/svgtidy)
 
 > **svgtidy** is a high-performance SVG optimizer written in Rust.
 
@@ -17,51 +18,99 @@ Compared to [SVGO](https://github.com/svg/svgo), `svgtidy` is **fast**—up to 1
 - **Batch Processing**: Parallel directory scanning and optimization.
 - **AST-based**: Robust DOM-like mutations.
 - **Configurable**: Toggle plugins, set precision, and precision formatting.
-- **WASM Support**: Running directly in the browser (coming soon to a web UI).
+- **Cross-Platform**: Runs on CLI, Node.js, and in the browser (WASM).
 
-## 🚀 Installation
+## 🚀 Installation & Usage
 
-Ensure you have [Rust](https://www.rust-lang.org/tools/install) installed.
+### 📦 Node.js / Web (WASM)
 
-### From Source
+Use `svgtidy` directly in your JavaScript/TypeScript projects.
+
 ```bash
-git clone https://github.com/honkinglin/svgx.git
-cd svgtidy
+npm install svgtidy
+```
+
+**Usage:**
+
+```javascript
+import init, { optimize } from 'svgtidy';
+
+// Initialize the WASM module (required once)
+await init();
+
+const svg = '<svg>...</svg>';
+const optimized = optimize(svg);
+console.log(optimized);
+```
+
+### 🦀 CLI (Command Line)
+
+Install the binary tool using Rust's cargo:
+
+```bash
 cargo install --path .
-```
-This will compile the project and install the `svgtidy` binary to your Cargo bin directory (usually `~/.cargo/bin`). Ensure this directory is in your `PATH`.
-
-Alternatively, to build without installing:
-```bash
+# Or build from source
 cargo build --release
-# Binary will be at ./target/release/svgtidy
 ```
 
-## 🛠 Usage
+**Usage:**
 
-### Command Line (CLI)
-
-**Basic Optimization**
 ```bash
+# Optimize a single file
 svgtidy input.svg -o output.svg
-```
 
-**Directory (Batch) Mode**
-Recursively optimizes all SVGs in `icons/` and saves them to `dist/`, maintaining directory structure.
-```bash
+# Optimize a directory (recursive)
 svgtidy icons/ -o dist/
+
+# Set precision and disable specific plugins
+svgtidy input.svg -o output.svg -p 5 --disable removeTitle
 ```
 
-**Customization**
+### ⚡ Vite
+
+Install the dedicated Vite plugin:
+
 ```bash
-# Set numeric precision to 5 decimal places
-svgtidy input.svg -o output.svg -p 5
-
-# Enable/Disable specific plugins
-svgtidy input.svg --disable removeTitle --enable removeStyleElement
+npm install vite-plugin-svgtidy
 ```
 
-### Full CLI Options
+**Usage (`vite.config.js`):**
+
+```javascript
+import svgtidy from 'vite-plugin-svgtidy';
+
+export default {
+  plugins: [svgtidy()]
+}
+```
+
+### 📦 Webpack
+
+Install the Webpack loader:
+
+```bash
+npm install svgtidy-loader
+```
+
+**Usage (`webpack.config.js`):**
+
+```javascript
+module.exports = {
+  module: {
+    rules: [
+      {
+        test: /\.svg$/,
+        use: [
+          { loader: 'svgtidy-loader' }
+        ]
+      }
+    ]
+  }
+}
+```
+
+## ⚙️ Configuration (CLI)
+
 ```text
 Usage: svgtidy [OPTIONS] <INPUT>
 
@@ -79,30 +128,30 @@ Options:
 
 ## 🔌 Plugins
 
-`svgtidy` currently supports the following optimization plugins:
+`svgtidy` enables these plugins by default to ensure maximum reduction:
 
-| Plugin Name | Description | Default |
-| :--- | :--- | :--- |
-| `removeDoctype` | Removes `<!DOCTYPE>` declaration. | `true` |
-| `removeXMLProcInst` | Removes `<?xml ... ?>` instructions. | `true` |
-| `removeComments` | Removes comments. | `true` |
-| `removeMetadata` | Removes `<metadata>` elements. | `true` |
-| `removeTitle` | Removes `<title>` elements. | `true` |
-| `removeDesc` | Removes `<desc>` elements. | `true` |
-| `removeEditorsNSData`| Removes editor namespaced attributes (Inkscape, etc.). | `true` |
-| `cleanupAttrs` | Trims attribute whitespace. | `true` |
-| `mergePaths` | Merges adjacent paths with same attributes. | `true` |
-| `convertShapeToPath` | Converts basic shapes (rect, circle) to path. | `true` |
-| `convertPathData` | Optimizes path commands (relative, precision). | `true` |
-| `convertTransform` | Collapses multiple transforms into one. | `true` |
-| `removeHiddenElems` | Removes hidden elements (`display="none"`). | `true` |
-| `removeEmptyText` | Removes empty text nodes. | `true` |
-| `convertColors` | Converts colors (rgb to hex, etc.). | `true` |
-| `collapseGroups` | Removes redundant `<g>` tags. | `true` |
-| `moveGroupAttrsToElems`| Moves attributes from groups to elements (enabling collapse). | `true` |
-| `moveElemsAttrsToGroup`| Moves common attributes from elements to groups. | `true` |
+| Plugin Name | Description |
+| :--- | :--- |
+| `removeDoctype` | Removes `<!DOCTYPE>` declaration. |
+| `removeXMLProcInst` | Removes `<?xml ... ?>` instructions. |
+| `removeComments` | Removes comments. |
+| `removeMetadata` | Removes `<metadata>` elements. |
+| `removeTitle` | Removes `<title>` elements. |
+| `removeDesc` | Removes `<desc>` elements. |
+| `removeEditorsNSData`| Removes editor namespaced attributes (Inkscape, etc.). |
+| `cleanupAttrs` | Trims attribute whitespace. |
+| `mergePaths` | Merges adjacent paths with same attributes. |
+| `convertShapeToPath` | Converts basic shapes (rect, circle) to path. |
+| `convertPathData` | Optimizes path commands (relative, precision). |
+| `convertTransform` | Collapses multiple transforms into one. |
+| `removeHiddenElems` | Removes hidden elements (`display="none"`). |
+| `removeEmptyText` | Removes empty text nodes. |
+| `convertColors` | Converts colors (rgb to hex, etc.). |
+| `collapseGroups` | Removes redundant `<g>` tags. |
+| `moveGroupAttrsToElems`| Moves attributes from groups to elements. |
+| `moveElemsAttrsToGroup`| Moves common attributes from elements to groups. |
 
-*(And many more...)*
+*(And more...)*
 
 ## 📊 Benchmarks
 
@@ -113,113 +162,20 @@ Tests performed on a MacBook Pro (M3).
 | **Simple Icon** | ~0.5 KB | **~16 µs** | **~100x Faster** |
 | **Complex SVG** | ~30 KB | **~1 ms** | **~50x Faster** |
 
-## 🕸 WebAssembly (WASM)
+## � Development
 
-`svgtidy` provides a WASM interface for web usage.
+### Build WASM locally
+
+To build the WASM package for web usage (NPM):
 
 ```bash
 wasm-pack build --target web --out-dir npm/svgtidy-wasm
 ```
 
-**JS Example:**
-```javascript
-import init, { optimize } from './pkg/svgtidy.js';
-
-await init();
-const output = optimize('<svg>...</svg>');
-console.log(output);
-```
-
-## 📦 Javascript Ecosystem
-
-`svgtidy` is available for the Javascript ecosystem via NPM.
-
-### Vite Plugin
-```bash
-npm install vite-plugin-svgtidy
-```
-```javascript
-// vite.config.js
-import svgtidy from 'vite-plugin-svgtidy';
-
-export default {
-  plugins: [svgtidy()]
-}
-```
-
-### Webpack Loader
-```bash
-npm install svgtidy-loader
-```
-```javascript
-// webpack.config.js
-module.exports = {
-  module: {
-    rules: [
-      {
-        test: /\.svg$/,
-        use: [
-          { loader: 'svgtidy-loader' }
-        ]
-      }
-    ]
-  }
-}
-```
-
-## 🛠 Development of Plugins
-
-The JS packages are located in the `npm/` directory.
-
-### Build WASM Core
-First, build the core WASM module that plugins depend on:
-```bash
-wasm-pack build --target bundler --out-dir npm/svgtidy-wasm
-```
-
-### Build & Test Plugins
-To verify the plugins work correctly with the built WASM:
-```bash
-cd npm
-node verify.mjs
-```
-This script will:
-1. Verify the bare WASM module.
-2. Build `vite-plugin-svgtidy` and `svgtidy-loader`.
-3. Run example projects (`npm/examples/`) to verify real-world usage.
-
-
-
-## 🧪 Testing
-
-`svgtidy` uses a unified test suite to ensure consistency between the Rust core and the WASM/JS implementations.
-
-### Shared Test Cases
-Test cases are located in the `test-cases/` directory at the project root. To add a new test case, simply add an SVG file to this directory.
-
 ### Running Tests
 
-**Rust Core**:
-```bash
-cargo test
-```
-This runs unit tests and the integration test `tests/integration_test.rs`, which verifies all SVGs in `test-cases/`.
-
-**JS/WASM**:
-```bash
-cd npm
-npm run test:suite
-```
-This runs the Node.js test script `npm/test-suite.mjs`, which also verifies all SVGs in `test-cases/` using the compiled WASM module.
-
-## 🏗 Architecture
-
-The optimization pipeline is purely AST-based:
-1.  **Parser**: `xmlparser` (pull-parser) -> `Document` (DOM Tree).
-2.  **Plugins**: Vists and mutates the `Document` tree.
-3.  **Printer**: Serializes `Document` back to string.
-
-This allows for complex, context-aware optimizations (like moving attributes up/down the tree) that regex-based tools cannot safely perform.
+- **Rust**: `cargo test`
+- **JS/WASM**: `cd npm && npm run test:suite`
 
 ## 🤝 Contributing
 

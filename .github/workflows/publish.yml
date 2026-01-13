@@ -1,18 +1,47 @@
-name: Publish
+name: Publish to Cargo
 
 on:
   push:
-    tags:
-      - "v*"
+    branches:
+      - main
+    paths:
+      - "Cargo.toml"
 
 jobs:
   publish:
     name: Publish to Crates.io
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
-      - uses: actions-rust-lang/setup-rust-toolchain@v1
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Get Version
+        id: get-version
+        run: |
+          VERSION=$(grep '^version = ' Cargo.toml | cut -d '"' -f 2)
+          echo "Detected version: $VERSION"
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Check if version exists
+        id: check-publish
+        run: |
+          VERSION="${{ steps.get-version.outputs.version }}"
+          echo "Checking if svgtidy@$VERSION is already published..."
+
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://crates.io/api/v1/crates/svgtidy/$VERSION)
+
+          if [ "$HTTP_STATUS" -eq "200" ]; then
+            echo "Version $VERSION already exists on crates.io. Skipping publish."
+            echo "published=false" >> $GITHUB_OUTPUT
+          else
+            echo "Version $VERSION not found (Status $HTTP_STATUS). Proceeding to publish."
+            echo "published=true" >> $GITHUB_OUTPUT
+          fi
+
       - name: Publish
+        if: steps.check-publish.outputs.published == 'true'
         env:
           CARGO_REGISTRY_TOKEN: ${{ secrets.CRATES_IO_TOKEN }}
         run: cargo publish
