@@ -449,7 +449,147 @@ fn stringify_optimized(commands: &[Command], opts: &ConvertPathData) -> String {
                 cur_y = subpath_start_y;
             }
             // ... Implement others (Curve, Quad, Arc) similar way
-            _ => {}
+            Command::Curve(x1, y1, x2, y2, x, y) => {
+                let abs_coords = format!(
+                    "{} {} {} {} {} {}",
+                    format_num(*x1, p),
+                    format_num(*y1, p),
+                    format_num(*x2, p),
+                    format_num(*y2, p),
+                    format_num(*x, p),
+                    format_num(*y, p)
+                );
+                let rel_coords = format!(
+                    "{} {} {} {} {} {}",
+                    format_num(*x1 - cur_x, p),
+                    format_num(*y1 - cur_y, p),
+                    format_num(*x2 - cur_x, p),
+                    format_num(*y2 - cur_y, p),
+                    format_num(*x - cur_x, p),
+                    format_num(*y - cur_y, p)
+                );
+
+                let abs_s = format!("C{}", abs_coords);
+                let rel_s = format!("c{}", rel_coords);
+
+                if rel_s.len() < abs_s.len() {
+                    s.push_str(&rel_s);
+                } else {
+                    s.push_str(&abs_s);
+                }
+                cur_x = *x;
+                cur_y = *y;
+            }
+            Command::SmoothCurve(x2, y2, x, y) => {
+                let abs_coords = format!(
+                    "{} {} {} {}",
+                    format_num(*x2, p),
+                    format_num(*y2, p),
+                    format_num(*x, p),
+                    format_num(*y, p)
+                );
+                let rel_coords = format!(
+                    "{} {} {} {}",
+                    format_num(*x2 - cur_x, p),
+                    format_num(*y2 - cur_y, p),
+                    format_num(*x - cur_x, p),
+                    format_num(*y - cur_y, p)
+                );
+
+                let abs_s = format!("S{}", abs_coords);
+                let rel_s = format!("s{}", rel_coords);
+
+                if rel_s.len() < abs_s.len() {
+                    s.push_str(&rel_s);
+                } else {
+                    s.push_str(&abs_s);
+                }
+                cur_x = *x;
+                cur_y = *y;
+            }
+            Command::Quad(x1, y1, x, y) => {
+                let abs_coords = format!(
+                    "{} {} {} {}",
+                    format_num(*x1, p),
+                    format_num(*y1, p),
+                    format_num(*x, p),
+                    format_num(*y, p)
+                );
+                let rel_coords = format!(
+                    "{} {} {} {}",
+                    format_num(*x1 - cur_x, p),
+                    format_num(*y1 - cur_y, p),
+                    format_num(*x - cur_x, p),
+                    format_num(*y - cur_y, p)
+                );
+
+                let abs_s = format!("Q{}", abs_coords);
+                let rel_s = format!("q{}", rel_coords);
+
+                if rel_s.len() < abs_s.len() {
+                    s.push_str(&rel_s);
+                } else {
+                    s.push_str(&abs_s);
+                }
+                cur_x = *x;
+                cur_y = *y;
+            }
+            Command::SmoothQuad(x, y) => {
+                let abs_coords = format!("{} {}", format_num(*x, p), format_num(*y, p));
+                let rel_coords = format!(
+                    "{} {}",
+                    format_num(*x - cur_x, p),
+                    format_num(*y - cur_y, p)
+                );
+
+                let abs_s = format!("T{}", abs_coords);
+                let rel_s = format!("t{}", rel_coords);
+
+                if rel_s.len() < abs_s.len() {
+                    s.push_str(&rel_s);
+                } else {
+                    s.push_str(&abs_s);
+                }
+                cur_x = *x;
+                cur_y = *y;
+            }
+            Command::Arc(rx, ry, rot, la, sf, x, y) => {
+                // Formatting arc flags: 0 or 1
+                let la_s = if *la { "1" } else { "0" };
+                let sf_s = if *sf { "1" } else { "0" };
+
+                let abs_coords = format!(
+                    "{} {} {} {} {} {} {}",
+                    format_num(*rx, p),
+                    format_num(*ry, p),
+                    format_num(*rot, p),
+                    la_s,
+                    sf_s,
+                    format_num(*x, p),
+                    format_num(*y, p)
+                );
+                let rel_coords = format!(
+                    "{} {} {} {} {} {} {}",
+                    format_num(*rx, p),
+                    format_num(*ry, p),
+                    format_num(*rot, p),
+                    la_s,
+                    sf_s,
+                    format_num(*x - cur_x, p),
+                    format_num(*y - cur_y, p)
+                );
+
+                let abs_s = format!("A{}", abs_coords);
+                let rel_s = format!("a{}", rel_coords);
+
+                if rel_s.len() < abs_s.len() {
+                    s.push_str(&rel_s);
+                } else {
+                    s.push_str(&abs_s);
+                }
+                cur_x = *x;
+                cur_y = *y;
+            }
         }
     }
 
@@ -562,5 +702,19 @@ mod tests {
         let input = "M 10 10 L 20 10";
         let out = optimize_path_data(input, &ConvertPathData::default());
         assert_eq!(out, "M10 10H20");
+    }
+
+    #[test]
+    fn test_optimize_arc() {
+        // Circle path from convert_shape_to_path
+        let input = "M0 50A50 50 0 1 0 100 50A50 50 0 1 0 0 50z";
+        let out = optimize_path_data(input, &ConvertPathData::default());
+        println!("Optimized Arc: '{}'", out);
+        // Should not lose the arcs!
+        assert!(
+            out.contains("A") || out.contains("a"),
+            "Output was: {}",
+            out
+        );
     }
 }

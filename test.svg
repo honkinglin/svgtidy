@@ -1,9 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
-    <title>Test Icon</title>
-    <!-- Comment -->
-    <desc>Description</desc>
-    <rect x="0" y="0" width="100.12345" height="100" fill="red" />
-    <g>
-        <circle cx="50" cy="50" r="10" fill="none" stroke="none" />
-    </g>
+    <!-- This is a comment that will be removed -->
+    <rect x="10" y="10" width="80" height="80" fill="red" />
+    <circle cx="50" cy="50" r="20" fill="blue" />
 </svg>
