@@ -236,7 +236,7 @@ fn get_config(args: &Args) -> Vec<Box<dyn Plugin>> {
             Box::new(|| Box::new(RemoveUnknownsAndDefaults::default())),
             true,
         ),
-        p("mergePaths", Box::new(|| Box::new(MergePaths)), true),
+        p("mergePaths", Box::new(|| Box::new(MergePaths)), false),
         p("convertColors", Box::new(|| Box::new(ConvertColors)), true),
         p(
             "removeEmptyAttrs",

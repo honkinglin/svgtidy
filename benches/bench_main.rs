@@ -1,16 +1,6 @@
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
 use svgtidy::parser;
-use svgtidy::plugins::{
-    CleanupAttrs, CleanupIds, CleanupListOfValues, CleanupNumericValues, CollapseGroups,
-    ConvertColors, ConvertEllipseToCircle, ConvertOneStopGradients, ConvertPathData,
-    ConvertShapeToPath, ConvertStyleToAttrs, ConvertTransform, MergePaths, MoveElemsAttrsToGroup,
-    MoveGroupAttrsToElems, Plugin, RemoveComments, RemoveDesc, RemoveDimensions, RemoveDoctype,
-    RemoveEditorsNSData, RemoveEmptyAttrs, RemoveEmptyContainers, RemoveEmptyText,
-    RemoveHiddenElems, RemoveMetadata, RemoveRasterImages, RemoveScriptElement, RemoveStyleElement,
-    RemoveTitle, RemoveUnknownsAndDefaults, RemoveUnusedNS, RemoveUselessDefs,
-    RemoveUselessStrokeAndFill, RemoveXMLProcInst, SortAttrs, SortDefsChildren,
-};
-use svgtidy::printer;
+use svgtidy::optimize;
 
 fn get_complex_svg() -> String {
     let mut s =
@@ -37,53 +27,7 @@ fn get_icon_svg() -> String {
 }
 
 fn run_pipeline(input: &str) -> String {
-    let mut doc = parser::parse(input).unwrap();
-
-    // Replicating main.rs pipeline
-    let plugins: Vec<Box<dyn Plugin>> = vec![
-        Box::new(RemoveDoctype),
-        Box::new(RemoveXMLProcInst),
-        Box::new(RemoveComments),
-        Box::new(RemoveMetadata),
-        Box::new(RemoveTitle),
-        Box::new(RemoveDesc),
-        Box::new(RemoveEditorsNSData),
-        Box::new(RemoveScriptElement),
-        Box::new(RemoveRasterImages),
-        Box::new(RemoveStyleElement),
-        Box::new(ConvertStyleToAttrs),
-        Box::new(CleanupAttrs),
-        Box::new(RemoveDimensions),
-        Box::new(MoveGroupAttrsToElems),
-        Box::new(MoveElemsAttrsToGroup),
-        Box::new(ConvertOneStopGradients),
-        Box::new(CleanupIds),
-        Box::new(RemoveUselessDefs),
-        Box::new(RemoveEmptyContainers),
-        Box::new(RemoveHiddenElems),
-        Box::new(RemoveEmptyText),
-        Box::new(CollapseGroups),
-        Box::new(RemoveUselessStrokeAndFill),
-        Box::new(ConvertEllipseToCircle),
-        Box::new(ConvertShapeToPath),
-        Box::new(ConvertPathData::default()),
-        Box::new(ConvertTransform::default()),
-        Box::new(MergePaths),
-        Box::new(ConvertColors),
-        Box::new(CleanupNumericValues::default()),
-        Box::new(CleanupListOfValues::default()),
-        Box::new(RemoveUnknownsAndDefaults::default()),
-        Box::new(RemoveEmptyAttrs),
-        Box::new(RemoveUnusedNS),
-        Box::new(SortAttrs),
-        Box::new(SortDefsChildren),
-    ];
-
-    for plugin in plugins {
-        plugin.apply(&mut doc);
-    }
-
-    printer::print(&doc)
+    optimize(input)
 }
 
 fn bench_parser(c: &mut Criterion) {

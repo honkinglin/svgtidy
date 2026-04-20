@@ -7,7 +7,7 @@ pub mod visitor;
 use crate::plugins::{
     CleanupAttrs, CleanupIds, CleanupListOfValues, CleanupNumericValues, CollapseGroups,
     ConvertColors, ConvertEllipseToCircle, ConvertOneStopGradients, ConvertPathData,
-    ConvertShapeToPath, ConvertStyleToAttrs, ConvertTransform, MergePaths, MoveElemsAttrsToGroup,
+    ConvertShapeToPath, ConvertStyleToAttrs, ConvertTransform, MoveElemsAttrsToGroup,
     MoveGroupAttrsToElems, Plugin, RemoveComments, RemoveDesc, RemoveDimensions, RemoveDoctype,
     RemoveEditorsNSData, RemoveEmptyAttrs, RemoveEmptyContainers, RemoveEmptyText,
     RemoveHiddenElems, RemoveMetadata, RemoveRasterImages, RemoveScriptElement, RemoveTitle,
@@ -76,7 +76,6 @@ pub fn optimize(svg: &str) -> String {
             leading_zero: true,
         }),
         Box::new(RemoveUnknownsAndDefaults::default()),
-        Box::new(MergePaths),
         Box::new(ConvertColors),
         Box::new(RemoveEmptyAttrs),
         Box::new(RemoveUnusedNS),

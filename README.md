@@ -142,7 +142,7 @@ Options:
 | `removeDesc` | Removes `<desc>` elements. |
 | `removeEditorsNSData`| Removes editor namespaced attributes (Inkscape, etc.). |
 | `cleanupAttrs` | Trims attribute whitespace. |
-| `mergePaths` | Merges adjacent paths with same attributes. |
+| `mergePaths` | Conservatively merges adjacent simple paths when explicitly enabled. |
 | `convertShapeToPath` | Converts basic shapes (rect, circle) to path. |
 | `convertPathData` | Optimizes path commands (relative, precision). |
 | `convertTransform` | Collapses multiple transforms into one. |
