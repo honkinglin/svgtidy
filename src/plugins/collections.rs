@@ -7,8 +7,8 @@ pub fn find_used_ids(node: &Node, used_ids: &mut HashSet<String>) {
     match node {
         Node::Element(elem) => {
             // Check all attributes for references
-            for (_, value) in &elem.attributes {
-                extract_ids_from_value(value, used_ids);
+            for (key, value) in &elem.attributes {
+                extract_ids_from_attr(key, value, used_ids);
             }
 
             // Recurse
@@ -17,6 +17,25 @@ pub fn find_used_ids(node: &Node, used_ids: &mut HashSet<String>) {
             }
         }
         _ => {}
+    }
+}
+
+pub fn node_has_used_id(node: &Node, used_ids: &HashSet<String>) -> bool {
+    match node {
+        Node::Element(elem) => {
+            if elem
+                .attributes
+                .get("id")
+                .is_some_and(|id| used_ids.contains(id))
+            {
+                return true;
+            }
+
+            elem.children
+                .iter()
+                .any(|child| node_has_used_id(child, used_ids))
+        }
+        _ => false,
     }
 }
 
@@ -31,8 +50,40 @@ fn extract_ids_from_value(value: &str, used_ids: &mut HashSet<String>) {
         }
     }
 
-    // 2. href="#id" (xlink:href or href)
-    if value.starts_with('#') && value.len() > 1 {
-        used_ids.insert(value[1..].to_string());
+    // 2. plain #id references such as href, xlink:href, begin/end and ARIA idrefs
+    static HASH_REF_RE: OnceLock<Regex> = OnceLock::new();
+    let hash_ref_re =
+        HASH_REF_RE.get_or_init(|| Regex::new(r"#([A-Za-z_][A-Za-z0-9_.:-]*)").unwrap());
+
+    for cap in hash_ref_re.captures_iter(value) {
+        if let Some(id) = cap.get(1) {
+            used_ids.insert(id.as_str().to_string());
+        }
+    }
+
+}
+
+fn extract_ids_from_attr(key: &str, value: &str, used_ids: &mut HashSet<String>) {
+    extract_ids_from_value(value, used_ids);
+
+    let is_idref_list_attr = matches!(
+        key,
+        "aria-labelledby"
+            | "aria-describedby"
+            | "aria-owns"
+            | "aria-controls"
+            | "aria-flowto"
+            | "aria-activedescendant"
+    );
+
+    if !is_idref_list_attr {
+        return;
+    }
+
+    for token in value
+        .split(|c: char| c.is_ascii_whitespace() || c == ',' || c == ';')
+        .filter(|token| !token.is_empty())
+    {
+        used_ids.insert(token.to_string());
     }
 }

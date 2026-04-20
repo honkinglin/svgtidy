@@ -1,6 +1,6 @@
 use crate::plugins::collections::find_used_ids;
 use crate::plugins::Plugin;
-use crate::tree::{Document, Element, Node};
+use crate::tree::{Document, Node};
 use std::collections::HashSet;
 
 pub struct CleanupIds;
@@ -8,20 +8,6 @@ pub struct CleanupIds;
 impl Plugin for CleanupIds {
     fn apply(&self, doc: &mut Document) {
         let mut used_ids = HashSet::new();
-        find_used_ids(
-            &Node::Element(Element {
-                name: "root".to_string(),
-                attributes: Default::default(),
-                children: doc.root.clone(), // Clone? Expensive.
-                                            // find_used_ids takes &Node.
-                                            // We can iterate doc.root.
-            }),
-            &mut used_ids,
-        );
-
-        // Actually, creating a fake root is ugly.
-        // Let's just iterate doc.root.
-        used_ids.clear();
         for node in &doc.root {
             find_used_ids(node, &mut used_ids);
         }
@@ -74,5 +60,27 @@ mod tests {
         let output = printer::print(&doc);
 
         assert_eq!(output, expected);
+    }
+
+    #[test]
+    fn test_cleanup_ids_preserve_aria_idrefs() {
+        let input = "<svg><title id=\"title\">Name</title><rect aria-labelledby=\"title\"/></svg>";
+
+        let mut doc = parser::parse(input).unwrap();
+        CleanupIds.apply(&mut doc);
+        let output = printer::print(&doc);
+
+        assert!(output.contains("<title id=\"title\">"));
+    }
+
+    #[test]
+    fn test_cleanup_ids_preserve_begin_refs() {
+        let input = "<svg><path id=\"p\"/><animate href=\"#p\" begin=\"p.end\"/></svg>";
+
+        let mut doc = parser::parse(input).unwrap();
+        CleanupIds.apply(&mut doc);
+        let output = printer::print(&doc);
+
+        assert!(output.contains("<path id=\"p\"/>"));
     }
 }

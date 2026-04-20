@@ -1,4 +1,4 @@
-use crate::plugins::collections::find_used_ids;
+use crate::plugins::collections::{find_used_ids, node_has_used_id};
 use crate::plugins::Plugin;
 use crate::tree::{Document, Node};
 use std::collections::HashSet;
@@ -25,18 +25,7 @@ fn remove_useless_defs_in_nodes(nodes: &mut Vec<Node>, used_ids: &HashSet<String
             // If there is ANY defs element, filter its children now (mutable access)
             if elem.name == "defs" {
                 elem.children.retain(|child| {
-                    if let Node::Element(child_elem) = child {
-                        // Keep if it has an ID and that ID is used
-                        if let Some(id) = child_elem.attributes.get("id") {
-                            if used_ids.contains(id) {
-                                return true;
-                            }
-                        }
-                        // Remove unused definitions
-                        return false;
-                    }
-                    // Remove non-element nodes in defs (text, comments)
-                    false
+                    matches!(child, Node::Element(_)) && node_has_used_id(child, used_ids)
                 });
             }
         }
@@ -81,5 +70,28 @@ mod tests {
         RemoveUselessDefs.apply(&mut doc);
         let output = printer::print(&doc);
         assert_eq!(output, expected);
+    }
+
+    #[test]
+    fn test_keep_defs_container_when_nested_child_is_used() {
+        let input =
+            "<svg><defs><g><path id=\"used\"/></g></defs><use href=\"#used\"/></svg>";
+        let expected = "<svg><defs><g><path id=\"used\"/></g></defs><use href=\"#used\"/></svg>";
+
+        let mut doc = parser::parse(input).unwrap();
+        RemoveUselessDefs.apply(&mut doc);
+        let output = printer::print(&doc);
+        assert_eq!(output, expected);
+    }
+
+    #[test]
+    fn test_keep_defs_when_aria_uses_nested_id() {
+        let input =
+            "<svg><defs><g><title id=\"title\">T</title></g></defs><rect aria-labelledby=\"title\"/></svg>";
+
+        let mut doc = parser::parse(input).unwrap();
+        RemoveUselessDefs.apply(&mut doc);
+        let output = printer::print(&doc);
+        assert!(output.contains("<defs><g><title id=\"title\">T</title></g></defs>"));
     }
 }
