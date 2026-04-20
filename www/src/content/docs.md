@@ -122,6 +122,7 @@ console.log(output);
 | `removeDesc` | Removes `<desc>` elements. |
 | `removeHiddenElems` | Removes hidden elements (`display="none"`). |
 | `mergeStyles` | Merges adjacent compatible `<style>` elements. |
+| `inlineStyles` | Inlines simple unique stylesheet rules into `style` attributes. |
 | `convertShapeToPath` | Converts selected basic shapes (rect, line, poly*) to path. |
 | `convertPathData` | Optimizes path commands (relative, precision). |
 | `convertTransform` | Collapses multiple transforms into one. |

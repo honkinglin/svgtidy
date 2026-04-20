@@ -29,6 +29,7 @@ pub mod remove_title;
 
 pub mod convert_style_to_attrs;
 pub mod convert_transform;
+pub mod inline_styles;
 pub mod merge_paths;
 pub mod merge_styles;
 
@@ -77,6 +78,7 @@ pub use remove_title::RemoveTitle;
 
 pub use convert_style_to_attrs::ConvertStyleToAttrs;
 pub use convert_transform::ConvertTransform;
+pub use inline_styles::InlineStyles;
 pub use merge_paths::MergePaths;
 pub use merge_styles::MergeStyles;
 
