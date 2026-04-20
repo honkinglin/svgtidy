@@ -19,6 +19,11 @@ fn process_nodes(nodes: &mut Vec<Node>) {
             if elem.name == "g" {
                 // Try to move attributes to children
                 if !elem.children.is_empty() {
+                    if !elem.children.iter().all(|child| matches!(child, Node::Element(_))) {
+                        process_nodes(&mut elem.children);
+                        continue;
+                    }
+
                     let cached_transform = elem.attributes.get("transform").cloned();
 
                     // inheritable attributes
@@ -77,5 +82,15 @@ mod tests {
         let mut doc = parser::parse(input).unwrap();
         MoveGroupAttrsToElems.apply(&mut doc);
         assert_eq!(printer::print(&doc), expected);
+    }
+
+    #[test]
+    fn test_keep_group_transform_with_text_child() {
+        let input = "<svg><g transform=\"translate(10)\">label<rect/></g></svg>";
+
+        let mut doc = parser::parse(input).unwrap();
+        MoveGroupAttrsToElems.apply(&mut doc);
+
+        assert_eq!(printer::print(&doc), input);
     }
 }

@@ -1,0 +1,5 @@
+{
+  "installCommand": "cargo install wasm-pack && wasm-pack build --target bundler --out-dir pkg && npm --prefix www install",
+  "buildCommand": "npm --prefix www run build",
+  "outputDirectory": "www/dist"
+}

@@ -31,6 +31,13 @@ export function Playground() {
     }
   }, [deferredInput]);
 
+  const previewSrc = useMemo(() => {
+    if (!output) {
+      return '';
+    }
+    return `data:image/svg+xml;charset=utf-8,${encodeURIComponent(output)}`;
+  }, [output]);
+
   const handleCopy = () => {
     navigator.clipboard.writeText(output);
     setCopied(true);
@@ -118,10 +125,15 @@ export function Playground() {
                     <div className="p-5 text-red-500 text-sm">{error}</div>
                 ) : (
                     viewMode === 'preview' ? (
-                        <div 
-                            className="flex-1 flex items-center justify-center bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] dark:bg-[radial-gradient(#334155_1px,transparent_1px)] [background-size:20px_20px] p-6 min-h-[300px]"
-                            dangerouslySetInnerHTML={{ __html: output }} 
-                        />
+                        <div className="flex-1 flex items-center justify-center bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] dark:bg-[radial-gradient(#334155_1px,transparent_1px)] [background-size:20px_20px] p-6 min-h-[300px]">
+                            {previewSrc ? (
+                                <img
+                                    src={previewSrc}
+                                    alt="Optimized SVG preview"
+                                    className="max-h-full max-w-full object-contain"
+                                />
+                            ) : null}
+                        </div>
                     ) : (
                         <div className="flex-1 w-full relative bg-[#282c34] overflow-auto">
                             <Editor 
