@@ -177,16 +177,6 @@ wasm-pack build --target bundler --out-dir npm/svgtidy-wasm
 - **Rust**: `cargo test`
 - **JS/WASM**: `cd npm && npm run test:suite`
 
-### Refreshing pkg
-
-Regenerate the checked-in browser bundle with:
-
-```bash
-./scripts/build-pkg.sh
-```
-
-The script removes the `.gitignore` file recreated by `wasm-pack` so `pkg/` stays trackable in git.
-
 ## 🤝 Contributing
 
 Contributions are welcome!
