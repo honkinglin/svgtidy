@@ -1,20 +1,9 @@
 use clap::Parser;
 use rayon::prelude::*;
-use std::collections::HashSet;
 use std::fs;
 use std::path::PathBuf;
-use svgtidy::parser;
-use svgtidy::plugins::{
-    CleanupAttrs, CleanupIds, CleanupListOfValues, CleanupNumericValues, CollapseGroups,
-    ConvertColors, ConvertEllipseToCircle, ConvertOneStopGradients, ConvertPathData,
-    ConvertShapeToPath, ConvertStyleToAttrs, ConvertTransform, MergePaths, MoveElemsAttrsToGroup,
-    MoveGroupAttrsToElems, Plugin, RemoveComments, RemoveDesc, RemoveDimensions, RemoveDoctype,
-    RemoveEditorsNSData, RemoveEmptyAttrs, RemoveEmptyContainers, RemoveEmptyText,
-    RemoveHiddenElems, RemoveMetadata, RemoveRasterImages, RemoveScriptElement, RemoveStyleElement,
-    RemoveTitle, RemoveUnknownsAndDefaults, RemoveUnusedNS, RemoveUselessDefs,
-    RemoveUselessStrokeAndFill, RemoveXMLProcInst, SortAttrs, SortDefsChildren,
-};
-use svgtidy::printer;
+use svgtidy::optimize_with_options;
+use svgtidy::pipeline::{unknown_plugin_names, OptimizeOptions};
 use walkdir::WalkDir;
 
 #[derive(Parser, Debug, Clone)]
@@ -44,255 +33,34 @@ struct Args {
     pretty: bool,
 }
 
-struct PluginConfig {
-    name: &'static str,
-    factory: Box<dyn Fn() -> Box<dyn Plugin>>,
-    enabled_by_default: bool,
-}
-
-impl PluginConfig {
-    fn new(
-        name: &'static str,
-        factory: Box<dyn Fn() -> Box<dyn Plugin>>,
-        enabled_by_default: bool,
-    ) -> Self {
-        Self {
-            name,
-            factory,
-            enabled_by_default,
-        }
-    }
-}
-
-fn get_config(args: &Args) -> Vec<Box<dyn Plugin>> {
-    let mut plugins: Vec<Box<dyn Plugin>> = Vec::new();
-
-    // Helper to create config
-    let p = |name: &'static str, factory: Box<dyn Fn() -> Box<dyn Plugin>>, default: bool| {
-        PluginConfig::new(name, factory, default)
+fn build_options(args: &Args) -> Result<OptimizeOptions, String> {
+    let options = OptimizeOptions {
+        precision: args.precision as usize,
+        enable: args.enable.iter().cloned().collect(),
+        disable: args.disable.iter().cloned().collect(),
     };
 
-    // Capture precision for closures (cast to usize)
-    let precision = args.precision as usize;
-
-    // Define all available plugins
-    // Note: Order matters for optimal processing!
-    let available_plugins = vec![
-        p("removeDoctype", Box::new(|| Box::new(RemoveDoctype)), true),
-        p(
-            "removeXMLProcInst",
-            Box::new(|| Box::new(RemoveXMLProcInst)),
-            true,
-        ),
-        p(
-            "removeComments",
-            Box::new(|| Box::new(RemoveComments)),
-            true,
-        ),
-        p(
-            "removeMetadata",
-            Box::new(|| Box::new(RemoveMetadata)),
-            true,
-        ),
-        p("removeTitle", Box::new(|| Box::new(RemoveTitle)), true),
-        p("removeDesc", Box::new(|| Box::new(RemoveDesc)), true),
-        p(
-            "removeEditorsNSData",
-            Box::new(|| Box::new(RemoveEditorsNSData)),
-            true,
-        ),
-        p(
-            "removeScriptElement",
-            Box::new(|| Box::new(RemoveScriptElement)),
-            true,
-        ),
-        p(
-            "removeRasterImages",
-            Box::new(|| Box::new(RemoveRasterImages)),
-            true,
-        ),
-        p(
-            "removeStyleElement",
-            Box::new(|| Box::new(RemoveStyleElement)),
-            false,
-        ), // Optional
-        p(
-            "convertStyleToAttrs",
-            Box::new(|| Box::new(ConvertStyleToAttrs)),
-            true,
-        ),
-        p("cleanupAttrs", Box::new(|| Box::new(CleanupAttrs)), true),
-        p(
-            "removeUselessStrokeAndFill",
-            Box::new(|| Box::new(RemoveUselessStrokeAndFill)),
-            true,
-        ),
-        p(
-            "removeDimensions",
-            Box::new(|| Box::new(RemoveDimensions)),
-            true,
-        ),
-        // Structure
-        p(
-            "moveGroupAttrsToElems",
-            Box::new(|| Box::new(MoveGroupAttrsToElems)),
-            true,
-        ),
-        p(
-            "moveElemsAttrsToGroup",
-            Box::new(|| Box::new(MoveElemsAttrsToGroup)),
-            true,
-        ),
-        p(
-            "convertOneStopGradients",
-            Box::new(|| Box::new(ConvertOneStopGradients)),
-            true,
-        ),
-        p("cleanupIds", Box::new(|| Box::new(CleanupIds)), true),
-        p(
-            "removeUselessDefs",
-            Box::new(|| Box::new(RemoveUselessDefs)),
-            true,
-        ),
-        p(
-            "removeEmptyContainers",
-            Box::new(|| Box::new(RemoveEmptyContainers)),
-            true,
-        ),
-        p(
-            "removeHiddenElems",
-            Box::new(|| Box::new(RemoveHiddenElems)),
-            true,
-        ),
-        p(
-            "removeEmptyText",
-            Box::new(|| Box::new(RemoveEmptyText)),
-            true,
-        ),
-        p(
-            "collapseGroups",
-            Box::new(|| Box::new(CollapseGroups)),
-            true,
-        ),
-        // Shapes & Paths
-        p(
-            "convertEllipseToCircle",
-            Box::new(|| Box::new(ConvertEllipseToCircle)),
-            true,
-        ),
-        p(
-            "convertShapeToPath",
-            Box::new(|| Box::new(ConvertShapeToPath)),
-            true,
-        ),
-        // Configurable Plugins
-        p(
-            "convertPathData",
-            Box::new(move || {
-                Box::new(ConvertPathData {
-                    float_precision: precision,
-                    leading_zero: true,
-                    ..Default::default()
-                })
-            }),
-            true,
-        ),
-        p(
-            "convertTransform",
-            Box::new(move || {
-                Box::new(ConvertTransform {
-                    float_precision: precision,
-                    deg_precision: precision,
-                    ..Default::default()
-                })
-            }),
-            true,
-        ),
-        p(
-            "cleanupNumericValues",
-            Box::new(move || {
-                Box::new(CleanupNumericValues {
-                    float_precision: precision,
-                    remove_px: true,
-                    leading_zero: true,
-                })
-            }),
-            true,
-        ),
-        p(
-            "cleanupListOfValues",
-            Box::new(move || {
-                Box::new(CleanupListOfValues {
-                    float_precision: precision,
-                    default_px: true,
-                    convert_to_px: true,
-                    leading_zero: true,
-                })
-            }),
-            true,
-        ),
-        p(
-            "removeUnknownsAndDefaults",
-            Box::new(|| Box::new(RemoveUnknownsAndDefaults::default())),
-            true,
-        ),
-        p("mergePaths", Box::new(|| Box::new(MergePaths)), false),
-        p("convertColors", Box::new(|| Box::new(ConvertColors)), true),
-        p(
-            "removeEmptyAttrs",
-            Box::new(|| Box::new(RemoveEmptyAttrs)),
-            true,
-        ),
-        p(
-            "removeUnusedNS",
-            Box::new(|| Box::new(RemoveUnusedNS)),
-            true,
-        ),
-        p("sortAttrs", Box::new(|| Box::new(SortAttrs)), true),
-        p(
-            "sortDefsChildren",
-            Box::new(|| Box::new(SortDefsChildren)),
-            true,
-        ),
-    ];
-
-    // Resolve enabled/disabled plugins
-    let explicit_enable: HashSet<&String> = args.enable.iter().collect();
-    let explicit_disable: HashSet<&String> = args.disable.iter().collect();
-
-    for config in available_plugins {
-        let mut active = config.enabled_by_default;
-
-        if explicit_enable.contains(&config.name.to_string()) {
-            active = true;
-        }
-        if explicit_disable.contains(&config.name.to_string()) {
-            active = false;
-        }
-
-        if active {
-            plugins.push((config.factory)());
-        }
+    let unknown = unknown_plugin_names(&options);
+    if unknown.is_empty() {
+        Ok(options)
+    } else {
+        Err(format!("Unknown plugin(s): {}", unknown.join(", ")))
     }
-
-    plugins
 }
 
-fn process_string(text: &str, args: &Args) -> Result<String, String> {
-    match parser::parse(text) {
-        Ok(mut doc) => {
-            let plugins = get_config(args);
-            for plugin in plugins {
-                plugin.apply(&mut doc);
-            }
-            Ok(printer::print(&doc))
-        }
-        Err(e) => Err(format!("Parse error: {}", e)),
-    }
+fn process_string(text: &str, options: &OptimizeOptions) -> Result<String, String> {
+    optimize_with_options(text, &options).map_err(|e| format!("Parse error: {}", e))
 }
 
 fn main() {
     let args = Args::parse();
+    let options = match build_options(&args) {
+        Ok(options) => options,
+        Err(error) => {
+            eprintln!("Error: {}", error);
+            std::process::exit(1);
+        }
+    };
 
     if args.input.is_dir() {
         // Batch Mode
@@ -319,7 +87,7 @@ fn main() {
             };
 
             if let Ok(text) = fs::read_to_string(input_path) {
-                match process_string(&text, &args) {
+                match process_string(&text, &options) {
                     Ok(out) => {
                         if let Some(path) = output_path {
                             // Ensure parent exists
@@ -344,7 +112,7 @@ fn main() {
     } else {
         // Single File Mode
         match fs::read_to_string(&args.input) {
-            Ok(text) => match process_string(&text, &args) {
+            Ok(text) => match process_string(&text, &options) {
                 Ok(out) => {
                     if let Some(output_path) = args.output {
                         fs::write(output_path, out).expect("Could not write output file");
