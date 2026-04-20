@@ -2,12 +2,12 @@ use crate::plugins::{
     CleanupAttrs, CleanupEnableBackground, CleanupIds, CleanupListOfValues, CleanupNumericValues,
     CollapseGroups, ConvertColors, ConvertEllipseToCircle, ConvertOneStopGradients,
     ConvertPathData, ConvertShapeToPath, ConvertStyleToAttrs, ConvertTransform, MergePaths,
-    MoveElemsAttrsToGroup, MoveGroupAttrsToElems, Plugin, RemoveComments, RemoveDesc,
-    RemoveDimensions, RemoveDoctype, RemoveEditorsNSData, RemoveEmptyAttrs, RemoveEmptyContainers,
-    RemoveEmptyText, RemoveHiddenElems, RemoveMetadata, RemoveNonInheritableGroupAttrs,
-    RemoveRasterImages, RemoveScriptElement, RemoveStyleElement, RemoveTitle,
-    RemoveUnknownsAndDefaults, RemoveUnusedNS, RemoveUselessDefs, RemoveUselessStrokeAndFill,
-    RemoveXMLProcInst, SortAttrs, SortDefsChildren,
+    MergeStyles, MoveElemsAttrsToGroup, MoveGroupAttrsToElems, Plugin, RemoveComments,
+    RemoveDesc, RemoveDimensions, RemoveDoctype, RemoveEditorsNSData, RemoveEmptyAttrs,
+    RemoveEmptyContainers, RemoveEmptyText, RemoveHiddenElems, RemoveMetadata,
+    RemoveNonInheritableGroupAttrs, RemoveRasterImages, RemoveScriptElement, RemoveStyleElement,
+    RemoveTitle, RemoveUnknownsAndDefaults, RemoveUnusedNS, RemoveUselessDefs,
+    RemoveUselessStrokeAndFill, RemoveXMLProcInst, SortAttrs, SortDefsChildren,
 };
 use crate::tree::Document;
 use std::collections::HashSet;
@@ -75,6 +75,10 @@ const PLUGIN_DESCRIPTORS: &[PluginDescriptor] = &[
     PluginDescriptor {
         name: "removeStyleElement",
         enabled_by_default: false,
+    },
+    PluginDescriptor {
+        name: "mergeStyles",
+        enabled_by_default: true,
     },
     PluginDescriptor {
         name: "convertStyleToAttrs",
@@ -249,6 +253,7 @@ fn build_plugin(name: &str, precision: usize) -> Box<dyn Plugin> {
         "removeScriptElement" => Box::new(RemoveScriptElement),
         "removeRasterImages" => Box::new(RemoveRasterImages),
         "removeStyleElement" => Box::new(RemoveStyleElement),
+        "mergeStyles" => Box::new(MergeStyles),
         "convertStyleToAttrs" => Box::new(ConvertStyleToAttrs),
         "cleanupAttrs" => Box::new(CleanupAttrs),
         "removeUselessStrokeAndFill" => Box::new(RemoveUselessStrokeAndFill),

@@ -30,6 +30,7 @@ pub mod remove_title;
 pub mod convert_style_to_attrs;
 pub mod convert_transform;
 pub mod merge_paths;
+pub mod merge_styles;
 
 pub mod cleanup_list_of_values;
 pub mod remove_unknowns_and_defaults;
@@ -77,6 +78,7 @@ pub use remove_title::RemoveTitle;
 pub use convert_style_to_attrs::ConvertStyleToAttrs;
 pub use convert_transform::ConvertTransform;
 pub use merge_paths::MergePaths;
+pub use merge_styles::MergeStyles;
 
 pub use cleanup_list_of_values::CleanupListOfValues;
 pub use remove_unknowns_and_defaults::RemoveUnknownsAndDefaults;
