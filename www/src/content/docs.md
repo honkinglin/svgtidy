@@ -8,7 +8,7 @@ Ensure you have [Rust](https://www.rust-lang.org/tools/install) installed.
 
 ### From Source
 ```bash
-git clone https://github.com/honkinglin/svgx.git
+git clone https://github.com/honkinglin/svgtidy.git
 cd svgtidy
 cargo install --path .
 ```

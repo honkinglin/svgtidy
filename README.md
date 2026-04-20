@@ -1,6 +1,6 @@
 # ![Logo](logo.svg)
 
-![CI](https://github.com/honkinglin/svgx/actions/workflows/ci.yml/badge.svg)
+![CI](https://github.com/honkinglin/svgtidy/actions/workflows/ci.yml/badge.svg)
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![Crates.io Version](https://img.shields.io/crates/v/svgtidy)
 ![NPM Version](https://img.shields.io/npm/v/svgtidy)
@@ -9,7 +9,7 @@
 
 It removes redundant information from SVG files (like comments, metadata, and hidden elements) and creates a minimized, cleaner version without affecting rendering.
 
-Compared to [SVGO](https://github.com/svg/svgo), `svgtidy` is **fast**—up to 100x faster for single icons and 50x faster for complex files.
+Compared to [SVGO](https://github.com/svg/svgo), `svgtidy` is designed to be fast while preserving SVG semantics.
 
 ---
 
@@ -185,7 +185,7 @@ Regenerate the checked-in browser bundle with:
 ./scripts/build-pkg.sh
 ```
 
-The script removes the `.gitignore` file recreated by `wasm-pack` so `pkg/` stays trackable in git.
+The script removes the `.gitignore` recreated by `wasm-pack` and cleans legacy `svgx*` files so `pkg/` stays trackable and deterministic in git.
 
 ### Comparing Against SVGO
 
