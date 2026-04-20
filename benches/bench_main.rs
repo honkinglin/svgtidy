@@ -1,6 +1,6 @@
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
-use svgtidy::parser;
 use svgtidy::optimize;
+use svgtidy::parser;
 
 fn get_complex_svg() -> String {
     let mut s =

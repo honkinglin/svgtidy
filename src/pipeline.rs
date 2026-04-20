@@ -192,7 +192,10 @@ pub fn apply_default_pipeline(doc: &mut Document, options: &OptimizeOptions) {
 }
 
 pub fn unknown_plugin_names(options: &OptimizeOptions) -> Vec<String> {
-    let known: HashSet<&str> = plugin_descriptors().iter().map(|plugin| plugin.name).collect();
+    let known: HashSet<&str> = plugin_descriptors()
+        .iter()
+        .map(|plugin| plugin.name)
+        .collect();
     let mut unknown: Vec<String> = options
         .enable
         .iter()

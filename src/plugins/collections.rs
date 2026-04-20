@@ -60,7 +60,6 @@ fn extract_ids_from_value(value: &str, used_ids: &mut HashSet<String>) {
             used_ids.insert(id.as_str().to_string());
         }
     }
-
 }
 
 fn extract_ids_from_attr(key: &str, value: &str, used_ids: &mut HashSet<String>) {

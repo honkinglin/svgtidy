@@ -26,9 +26,7 @@ fn merge_paths_in_nodes(nodes: &mut Vec<Node>) {
 
         let can_merge = if i + 1 < nodes.len() {
             match (&nodes[i], &nodes[i + 1]) {
-                (Node::Element(e1), Node::Element(e2)) => {
-                    can_merge_paths(e1, e2)
-                }
+                (Node::Element(e1), Node::Element(e2)) => can_merge_paths(e1, e2),
                 _ => false,
             }
         } else {

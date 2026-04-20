@@ -74,8 +74,7 @@ mod tests {
 
     #[test]
     fn test_keep_defs_container_when_nested_child_is_used() {
-        let input =
-            "<svg><defs><g><path id=\"used\"/></g></defs><use href=\"#used\"/></svg>";
+        let input = "<svg><defs><g><path id=\"used\"/></g></defs><use href=\"#used\"/></svg>";
         let expected = "<svg><defs><g><path id=\"used\"/></g></defs><use href=\"#used\"/></svg>";
 
         let mut doc = parser::parse(input).unwrap();

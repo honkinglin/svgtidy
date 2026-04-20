@@ -19,7 +19,11 @@ fn process_nodes(nodes: &mut Vec<Node>) {
             if elem.name == "g" {
                 // Try to move attributes to children
                 if !elem.children.is_empty() {
-                    if !elem.children.iter().all(|child| matches!(child, Node::Element(_))) {
+                    if !elem
+                        .children
+                        .iter()
+                        .all(|child| matches!(child, Node::Element(_)))
+                    {
                         process_nodes(&mut elem.children);
                         continue;
                     }
