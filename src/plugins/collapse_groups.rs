@@ -32,7 +32,7 @@ fn collapse_groups_in_nodes(nodes: &mut Vec<Node>, parent_name: &str) {
 
     for node in nodes.drain(..) {
         if let Node::Element(elem) = node {
-            if elem.name == "g" && elem.attributes.is_empty() {
+            if can_unwrap_group(&elem) {
                 // Unwrap: Move children to parent
                 new_nodes.extend(elem.children);
             } else {
@@ -45,6 +45,29 @@ fn collapse_groups_in_nodes(nodes: &mut Vec<Node>, parent_name: &str) {
     }
 
     *nodes = new_nodes;
+}
+
+fn can_unwrap_group(elem: &crate::tree::Element) -> bool {
+    elem.name == "g" && elem.attributes.is_empty() && !has_group_semantic_children(elem)
+}
+
+fn has_group_semantic_children(elem: &crate::tree::Element) -> bool {
+    elem.children.iter().any(|child| {
+        matches!(
+            child,
+            Node::Element(child_elem)
+                if matches!(
+                    child_elem.name.as_str(),
+                    "animate"
+                        | "animateColor"
+                        | "animateMotion"
+                        | "animateTransform"
+                        | "desc"
+                        | "set"
+                        | "title"
+                )
+        )
+    })
 }
 
 #[cfg(test)]
@@ -90,5 +113,21 @@ mod tests {
         let mut doc = parser::parse(input).unwrap();
         CollapseGroups.apply(&mut doc);
         assert_eq!(printer::print(&doc), expected);
+    }
+
+    #[test]
+    fn test_keep_group_with_title_child() {
+        let input = "<svg><g><title>Label</title><rect/></g></svg>";
+        let mut doc = parser::parse(input).unwrap();
+        CollapseGroups.apply(&mut doc);
+        assert_eq!(printer::print(&doc), input);
+    }
+
+    #[test]
+    fn test_keep_group_with_animation_child() {
+        let input = "<svg><g><animateTransform attributeName=\"transform\" type=\"scale\" from=\"1\" to=\"2\" dur=\"1s\"/><rect/></g></svg>";
+        let mut doc = parser::parse(input).unwrap();
+        CollapseGroups.apply(&mut doc);
+        assert_eq!(printer::print(&doc), input);
     }
 }
