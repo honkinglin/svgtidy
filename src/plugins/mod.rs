@@ -47,6 +47,7 @@ pub mod move_elems_attrs_to_group;
 pub mod move_group_attrs_to_elems;
 
 pub mod remove_empty_containers;
+pub mod remove_non_inheritable_group_attrs;
 pub mod remove_unused_ns;
 pub mod sort_defs_children;
 
@@ -92,5 +93,6 @@ pub use move_elems_attrs_to_group::MoveElemsAttrsToGroup;
 pub use move_group_attrs_to_elems::MoveGroupAttrsToElems;
 
 pub use remove_empty_containers::RemoveEmptyContainers;
+pub use remove_non_inheritable_group_attrs::RemoveNonInheritableGroupAttrs;
 pub use remove_unused_ns::RemoveUnusedNS;
 pub use sort_defs_children::SortDefsChildren;

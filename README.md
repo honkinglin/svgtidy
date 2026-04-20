@@ -146,6 +146,7 @@ Options:
 | `convertShapeToPath` | Converts selected basic shapes (rect, line, poly*) to path. |
 | `convertPathData` | Optimizes path commands (relative, precision). |
 | `convertTransform` | Collapses multiple transforms into one. |
+| `removeNonInheritableGroupAttrs` | Removes non-inheritable presentation attributes from `<g>`. |
 | `removeHiddenElems` | Removes hidden elements (`display="none"`). |
 | `removeEmptyText` | Removes empty text nodes. |
 | `convertColors` | Converts colors (rgb to hex, etc.). |

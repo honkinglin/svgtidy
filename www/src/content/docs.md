@@ -124,5 +124,6 @@ console.log(output);
 | `convertShapeToPath` | Converts selected basic shapes (rect, line, poly*) to path. |
 | `convertPathData` | Optimizes path commands (relative, precision). |
 | `convertTransform` | Collapses multiple transforms into one. |
+| `removeNonInheritableGroupAttrs` | Removes non-inheritable presentation attributes from `<g>`. |
 | `convertColors` | Converts colors (rgb to hex, etc.). |
 | `collapseGroups` | Removes redundant `<g>` tags. |

@@ -4,9 +4,10 @@ use crate::plugins::{
     ConvertShapeToPath, ConvertStyleToAttrs, ConvertTransform, MergePaths, MoveElemsAttrsToGroup,
     MoveGroupAttrsToElems, Plugin, RemoveComments, RemoveDesc, RemoveDimensions, RemoveDoctype,
     RemoveEditorsNSData, RemoveEmptyAttrs, RemoveEmptyContainers, RemoveEmptyText,
-    RemoveHiddenElems, RemoveMetadata, RemoveRasterImages, RemoveScriptElement, RemoveStyleElement,
-    RemoveTitle, RemoveUnknownsAndDefaults, RemoveUnusedNS, RemoveUselessDefs,
-    RemoveUselessStrokeAndFill, RemoveXMLProcInst, SortAttrs, SortDefsChildren,
+    RemoveHiddenElems, RemoveMetadata, RemoveNonInheritableGroupAttrs, RemoveRasterImages,
+    RemoveScriptElement, RemoveStyleElement, RemoveTitle, RemoveUnknownsAndDefaults,
+    RemoveUnusedNS, RemoveUselessDefs, RemoveUselessStrokeAndFill, RemoveXMLProcInst, SortAttrs,
+    SortDefsChildren,
 };
 use crate::tree::Document;
 use std::collections::HashSet;
@@ -156,6 +157,10 @@ const PLUGIN_DESCRIPTORS: &[PluginDescriptor] = &[
         enabled_by_default: true,
     },
     PluginDescriptor {
+        name: "removeNonInheritableGroupAttrs",
+        enabled_by_default: true,
+    },
+    PluginDescriptor {
         name: "mergePaths",
         enabled_by_default: false,
     },
@@ -277,6 +282,7 @@ fn build_plugin(name: &str, precision: usize) -> Box<dyn Plugin> {
             leading_zero: true,
         }),
         "removeUnknownsAndDefaults" => Box::new(RemoveUnknownsAndDefaults::default()),
+        "removeNonInheritableGroupAttrs" => Box::new(RemoveNonInheritableGroupAttrs),
         "mergePaths" => Box::new(MergePaths),
         "convertColors" => Box::new(ConvertColors),
         "removeEmptyAttrs" => Box::new(RemoveEmptyAttrs),
