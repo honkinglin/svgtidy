@@ -121,7 +121,7 @@ console.log(output);
 | `removeTitle` | Removes `<title>` elements. |
 | `removeDesc` | Removes `<desc>` elements. |
 | `removeHiddenElems` | Removes hidden elements (`display="none"`). |
-| `convertShapeToPath` | Converts basic shapes (rect, circle) to path. |
+| `convertShapeToPath` | Converts selected basic shapes (rect, line, poly*) to path. |
 | `convertPathData` | Optimizes path commands (relative, precision). |
 | `convertTransform` | Collapses multiple transforms into one. |
 | `convertColors` | Converts colors (rgb to hex, etc.). |

@@ -142,7 +142,7 @@ Options:
 | `removeDesc` | Removes `<desc>` elements. |
 | `removeEditorsNSData`| Removes editor namespaced attributes (Inkscape, etc.). |
 | `cleanupAttrs` | Trims attribute whitespace. |
-| `mergePaths` | Merges adjacent paths with same attributes. |
+| `mergePaths` | Conservatively merges adjacent simple paths when explicitly enabled. |
 | `convertShapeToPath` | Converts basic shapes (rect, circle) to path. |
 | `convertPathData` | Optimizes path commands (relative, precision). |
 | `convertTransform` | Collapses multiple transforms into one. |
@@ -176,6 +176,36 @@ wasm-pack build --target bundler --out-dir npm/svgtidy-wasm
 
 - **Rust**: `cargo test`
 - **JS/WASM**: `cd npm && npm run test:suite`
+
+### Refreshing pkg
+
+Regenerate the checked-in browser bundle with:
+
+```bash
+./scripts/build-pkg.sh
+```
+
+The script removes the `.gitignore` file recreated by `wasm-pack` so `pkg/` stays trackable in git.
+
+### Comparing Against SVGO
+
+Install `svgo` in the npm workspace:
+
+```bash
+npm --prefix npm install --save-dev svgo
+```
+
+Then compare `svgtidy` against SVGO on the default `test-cases/` corpus:
+
+```bash
+npm --prefix npm run compare:svgo
+```
+
+You can also point it at a specific file or directory and control the number of timing iterations:
+
+```bash
+npm --prefix npm run compare:svgo -- ../test-cases --iterations 50
+```
 
 ## 🤝 Contributing
 

@@ -143,7 +143,7 @@ Options:
 | `removeEditorsNSData`| Removes editor namespaced attributes (Inkscape, etc.). |
 | `cleanupAttrs` | Trims attribute whitespace. |
 | `mergePaths` | Conservatively merges adjacent simple paths when explicitly enabled. |
-| `convertShapeToPath` | Converts basic shapes (rect, circle) to path. |
+| `convertShapeToPath` | Converts selected basic shapes (rect, line, poly*) to path. |
 | `convertPathData` | Optimizes path commands (relative, precision). |
 | `convertTransform` | Collapses multiple transforms into one. |
 | `removeHiddenElems` | Removes hidden elements (`display="none"`). |

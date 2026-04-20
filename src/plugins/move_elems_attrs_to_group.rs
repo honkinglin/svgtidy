@@ -32,7 +32,7 @@ fn process_nodes(nodes: &mut Vec<Node>) {
                     }
                 }
 
-                if element_children_count > 0 {
+                if element_children_count > 1 {
                     if let Some(candidates) = first_child_attrs {
                         for (k, v) in candidates {
                             if k == "transform" || k == "id" || k == "d" {
@@ -146,6 +146,14 @@ mod tests {
     #[test]
     fn test_no_move_mixed() {
         let input = "<svg><g><rect fill=\"red\"/><circle fill=\"blue\"/></g></svg>";
+        let mut doc = parser::parse(input).unwrap();
+        MoveElemsAttrsToGroup.apply(&mut doc);
+        assert_eq!(printer::print(&doc), input);
+    }
+
+    #[test]
+    fn test_no_move_when_only_one_element_child() {
+        let input = "<svg><g><rect fill=\"red\"/></g></svg>";
         let mut doc = parser::parse(input).unwrap();
         MoveElemsAttrsToGroup.apply(&mut doc);
         assert_eq!(printer::print(&doc), input);

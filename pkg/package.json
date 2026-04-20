@@ -1,0 +1,32 @@
+{
+  "name": "svgtidy",
+  "type": "module",
+  "collaborators": [
+    "Kyrie Lin"
+  ],
+  "description": "High-performance SVG optimizer written in Rust",
+  "version": "0.1.4",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/honkinglin/svgtidy"
+  },
+  "files": [
+    "svgtidy_bg.wasm",
+    "svgtidy.js",
+    "svgtidy_bg.js",
+    "svgtidy.d.ts"
+  ],
+  "main": "svgtidy.js",
+  "types": "svgtidy.d.ts",
+  "sideEffects": [
+    "./svgtidy.js",
+    "./snippets/*"
+  ],
+  "keywords": [
+    "svg",
+    "optimizer",
+    "wasm",
+    "webassembly"
+  ]
+}

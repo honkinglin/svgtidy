@@ -21,8 +21,6 @@ fn convert_shapes_in_nodes(nodes: &mut Vec<Node>) {
 fn convert_element(elem: &mut Element) {
     let d = match elem.name.as_str() {
         "rect" => convert_rect(elem),
-        "circle" => convert_circle(elem),
-        "ellipse" => convert_ellipse(elem),
         "line" => convert_line(elem),
         "polygon" => convert_poly(elem, true),
         "polyline" => convert_poly(elem, false),
@@ -76,55 +74,6 @@ fn convert_rect(elem: &Element) -> Option<String> {
     // Rounded rects are complex to implement correctly with arcs.
     // For now, let's skip complex rounded rects or implement basic.
     None
-}
-
-fn convert_circle(elem: &Element) -> Option<String> {
-    let r = get_num(elem, "r", 0.0);
-    if r <= 0.0 {
-        return None;
-    }
-    let cx = get_num(elem, "cx", 0.0);
-    let cy = get_num(elem, "cy", 0.0);
-
-    // Two Arcs
-    // M cx-r cy A r r 0 1 0 cx+r cy A r r 0 1 0 cx-r cy
-    Some(format!(
-        "M{} {}A{} {} 0 1 0 {} {}A{} {} 0 1 0 {} {}z",
-        cx - r,
-        cy,
-        r,
-        r,
-        cx + r,
-        cy,
-        r,
-        r,
-        cx - r,
-        cy
-    ))
-}
-
-fn convert_ellipse(elem: &Element) -> Option<String> {
-    let rx = get_num(elem, "rx", 0.0);
-    let ry = get_num(elem, "ry", 0.0);
-    if rx <= 0.0 || ry <= 0.0 {
-        return None;
-    }
-    let cx = get_num(elem, "cx", 0.0);
-    let cy = get_num(elem, "cy", 0.0);
-
-    Some(format!(
-        "M{} {}A{} {} 0 1 0 {} {}A{} {} 0 1 0 {} {}z",
-        cx - rx,
-        cy,
-        rx,
-        ry,
-        cx + rx,
-        cy,
-        rx,
-        ry,
-        cx - rx,
-        cy
-    ))
 }
 
 fn convert_line(elem: &Element) -> Option<String> {
@@ -206,15 +155,21 @@ mod tests {
     }
 
     #[test]
-    fn test_circle_to_path() {
+    fn test_keep_circle() {
         let input = "<svg><circle cx=\"50\" cy=\"50\" r=\"50\"/></svg>";
-        // r=50, cx=50, cy=50.
-        // M 0 50 A 50 50 0 1 0 100 50 A 50 50 0 1 0 0 50 z
-        let expected = "<svg><path d=\"M0 50A50 50 0 1 0 100 50A50 50 0 1 0 0 50z\"/></svg>";
 
         let mut doc = parser::parse(input).unwrap();
         ConvertShapeToPath.apply(&mut doc);
-        assert_eq!(printer::print(&doc), expected);
+        assert_eq!(printer::print(&doc), input);
+    }
+
+    #[test]
+    fn test_keep_ellipse() {
+        let input = "<svg><ellipse cx=\"50\" cy=\"50\" rx=\"20\" ry=\"10\"/></svg>";
+
+        let mut doc = parser::parse(input).unwrap();
+        ConvertShapeToPath.apply(&mut doc);
+        assert_eq!(printer::print(&doc), input);
     }
 
     #[test]
