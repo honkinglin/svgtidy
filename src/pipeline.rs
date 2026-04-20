@@ -2,12 +2,12 @@ use crate::plugins::{
     CleanupAttrs, CleanupEnableBackground, CleanupIds, CleanupListOfValues, CleanupNumericValues,
     CollapseGroups, ConvertColors, ConvertEllipseToCircle, ConvertOneStopGradients,
     ConvertPathData, ConvertShapeToPath, ConvertStyleToAttrs, ConvertTransform, MergePaths,
-    MergeStyles, MoveElemsAttrsToGroup, MoveGroupAttrsToElems, Plugin, RemoveComments,
-    RemoveDesc, RemoveDimensions, RemoveDoctype, RemoveEditorsNSData, RemoveEmptyAttrs,
-    RemoveEmptyContainers, RemoveEmptyText, RemoveHiddenElems, RemoveMetadata,
-    RemoveNonInheritableGroupAttrs, RemoveRasterImages, RemoveScriptElement, RemoveStyleElement,
-    RemoveTitle, RemoveUnknownsAndDefaults, RemoveUnusedNS, RemoveUselessDefs,
-    RemoveUselessStrokeAndFill, RemoveXMLProcInst, SortAttrs, SortDefsChildren,
+    MergeStyles, MoveElemsAttrsToGroup, MoveGroupAttrsToElems, Plugin, RemoveComments, RemoveDesc,
+    RemoveDimensions, RemoveDoctype, RemoveEditorsNSData, RemoveEmptyAttrs, RemoveEmptyContainers,
+    RemoveEmptyText, RemoveHiddenElems, RemoveMetadata, RemoveNonInheritableGroupAttrs,
+    RemoveRasterImages, RemoveScriptElement, RemoveStyleElement, RemoveTitle,
+    RemoveUnknownsAndDefaults, RemoveUnusedNS, RemoveUselessDefs, RemoveUselessStrokeAndFill,
+    RemoveXMLProcInst, SortAttrs, SortDefsChildren,
 };
 use crate::tree::Document;
 use std::collections::HashSet;
