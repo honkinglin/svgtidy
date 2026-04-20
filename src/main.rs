@@ -2,8 +2,9 @@ use clap::Parser;
 use rayon::prelude::*;
 use std::fs;
 use std::path::PathBuf;
-use svgtidy::optimize_with_options;
+use svgtidy::optimize_to_document;
 use svgtidy::pipeline::{unknown_plugin_names, OptimizeOptions};
+use svgtidy::printer;
 use walkdir::WalkDir;
 
 #[derive(Parser, Debug, Clone)]
@@ -48,8 +49,13 @@ fn build_options(args: &Args) -> Result<OptimizeOptions, String> {
     }
 }
 
-fn process_string(text: &str, options: &OptimizeOptions) -> Result<String, String> {
-    optimize_with_options(text, &options).map_err(|e| format!("Parse error: {}", e))
+fn process_string(text: &str, options: &OptimizeOptions, pretty: bool) -> Result<String, String> {
+    let doc = optimize_to_document(text, options).map_err(|e| format!("Parse error: {}", e))?;
+    if pretty {
+        Ok(printer::print_pretty(&doc))
+    } else {
+        Ok(printer::print(&doc))
+    }
 }
 
 fn main() {
@@ -87,7 +93,7 @@ fn main() {
             };
 
             if let Ok(text) = fs::read_to_string(input_path) {
-                match process_string(&text, &options) {
+                match process_string(&text, &options, args.pretty) {
                     Ok(out) => {
                         if let Some(path) = output_path {
                             // Ensure parent exists
@@ -112,7 +118,7 @@ fn main() {
     } else {
         // Single File Mode
         match fs::read_to_string(&args.input) {
-            Ok(text) => match process_string(&text, &options) {
+            Ok(text) => match process_string(&text, &options, args.pretty) {
                 Ok(out) => {
                     if let Some(output_path) = args.output {
                         fs::write(output_path, out).expect("Could not write output file");
