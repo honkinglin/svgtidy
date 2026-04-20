@@ -187,6 +187,26 @@ Regenerate the checked-in browser bundle with:
 
 The script removes the `.gitignore` file recreated by `wasm-pack` so `pkg/` stays trackable in git.
 
+### Comparing Against SVGO
+
+Install `svgo` in the npm workspace:
+
+```bash
+npm --prefix npm install --save-dev svgo
+```
+
+Then compare `svgtidy` against SVGO on the default `test-cases/` corpus:
+
+```bash
+npm --prefix npm run compare:svgo
+```
+
+You can also point it at a specific file or directory and control the number of timing iterations:
+
+```bash
+npm --prefix npm run compare:svgo -- ../test-cases --iterations 50
+```
+
 ## 🤝 Contributing
 
 Contributions are welcome!

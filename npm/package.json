@@ -3,11 +3,15 @@
   "private": true,
   "scripts": {
     "test:wasm": "node test-wasm.mjs",
-    "test:suite": "node test-suite.mjs"
+    "test:suite": "node test-suite.mjs",
+    "compare:svgo": "node compare-svgo.mjs"
   },
   "workspaces": [
     "svgtidy-loader",
     "vite-plugin-svgtidy",
     "examples/*"
-  ]
+  ],
+  "devDependencies": {
+    "svgo": "^4.0.1"
+  }
 }
