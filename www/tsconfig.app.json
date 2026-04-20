@@ -7,10 +7,6 @@
     "module": "ESNext",
     "types": ["vite/client"],
     "skipLibCheck": true,
-    "baseUrl": ".",
-    "paths": {
-      "svgtidy": ["../pkg"]
-    },
 
     /* Bundler mode */
     "moduleResolution": "bundler",

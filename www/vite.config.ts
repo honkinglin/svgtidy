@@ -8,7 +8,7 @@ import { fileURLToPath, URL } from 'node:url';
 export default defineConfig({
   resolve: {
     alias: {
-      svgtidy: fileURLToPath(new URL('../pkg', import.meta.url)),
+      svgtidy: fileURLToPath(new URL('../pkg/svgtidy.js', import.meta.url)),
     },
   },
   plugins: [
