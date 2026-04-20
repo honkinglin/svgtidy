@@ -147,6 +147,7 @@ Options:
 | `convertPathData` | Optimizes path commands (relative, precision). |
 | `convertTransform` | Collapses multiple transforms into one. |
 | `removeNonInheritableGroupAttrs` | Removes non-inheritable presentation attributes from `<g>`. |
+| `cleanupEnableBackground` | Removes or simplifies deprecated `enable-background` when safe. |
 | `removeHiddenElems` | Removes hidden elements (`display="none"`). |
 | `removeEmptyText` | Removes empty text nodes. |
 | `convertColors` | Converts colors (rgb to hex, etc.). |

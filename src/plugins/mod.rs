@@ -5,6 +5,7 @@ pub trait Plugin {
 }
 
 pub mod cleanup_attrs;
+pub mod cleanup_enable_background;
 pub mod convert_colors;
 pub mod remove_comments;
 pub mod remove_doctype;
@@ -52,6 +53,7 @@ pub mod remove_unused_ns;
 pub mod sort_defs_children;
 
 pub use cleanup_attrs::CleanupAttrs;
+pub use cleanup_enable_background::CleanupEnableBackground;
 pub use convert_colors::ConvertColors;
 pub use remove_comments::RemoveComments;
 pub use remove_doctype::RemoveDoctype;

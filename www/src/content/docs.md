@@ -125,5 +125,6 @@ console.log(output);
 | `convertPathData` | Optimizes path commands (relative, precision). |
 | `convertTransform` | Collapses multiple transforms into one. |
 | `removeNonInheritableGroupAttrs` | Removes non-inheritable presentation attributes from `<g>`. |
+| `cleanupEnableBackground` | Removes or simplifies deprecated `enable-background` when safe. |
 | `convertColors` | Converts colors (rgb to hex, etc.). |
 | `collapseGroups` | Removes redundant `<g>` tags. |

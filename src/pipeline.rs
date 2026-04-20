@@ -1,13 +1,13 @@
 use crate::plugins::{
-    CleanupAttrs, CleanupIds, CleanupListOfValues, CleanupNumericValues, CollapseGroups,
-    ConvertColors, ConvertEllipseToCircle, ConvertOneStopGradients, ConvertPathData,
-    ConvertShapeToPath, ConvertStyleToAttrs, ConvertTransform, MergePaths, MoveElemsAttrsToGroup,
-    MoveGroupAttrsToElems, Plugin, RemoveComments, RemoveDesc, RemoveDimensions, RemoveDoctype,
-    RemoveEditorsNSData, RemoveEmptyAttrs, RemoveEmptyContainers, RemoveEmptyText,
-    RemoveHiddenElems, RemoveMetadata, RemoveNonInheritableGroupAttrs, RemoveRasterImages,
-    RemoveScriptElement, RemoveStyleElement, RemoveTitle, RemoveUnknownsAndDefaults,
-    RemoveUnusedNS, RemoveUselessDefs, RemoveUselessStrokeAndFill, RemoveXMLProcInst, SortAttrs,
-    SortDefsChildren,
+    CleanupAttrs, CleanupEnableBackground, CleanupIds, CleanupListOfValues, CleanupNumericValues,
+    CollapseGroups, ConvertColors, ConvertEllipseToCircle, ConvertOneStopGradients,
+    ConvertPathData, ConvertShapeToPath, ConvertStyleToAttrs, ConvertTransform, MergePaths,
+    MoveElemsAttrsToGroup, MoveGroupAttrsToElems, Plugin, RemoveComments, RemoveDesc,
+    RemoveDimensions, RemoveDoctype, RemoveEditorsNSData, RemoveEmptyAttrs, RemoveEmptyContainers,
+    RemoveEmptyText, RemoveHiddenElems, RemoveMetadata, RemoveNonInheritableGroupAttrs,
+    RemoveRasterImages, RemoveScriptElement, RemoveStyleElement, RemoveTitle,
+    RemoveUnknownsAndDefaults, RemoveUnusedNS, RemoveUselessDefs, RemoveUselessStrokeAndFill,
+    RemoveXMLProcInst, SortAttrs, SortDefsChildren,
 };
 use crate::tree::Document;
 use std::collections::HashSet;
@@ -86,6 +86,10 @@ const PLUGIN_DESCRIPTORS: &[PluginDescriptor] = &[
     },
     PluginDescriptor {
         name: "removeUselessStrokeAndFill",
+        enabled_by_default: true,
+    },
+    PluginDescriptor {
+        name: "cleanupEnableBackground",
         enabled_by_default: true,
     },
     PluginDescriptor {
@@ -248,6 +252,7 @@ fn build_plugin(name: &str, precision: usize) -> Box<dyn Plugin> {
         "convertStyleToAttrs" => Box::new(ConvertStyleToAttrs),
         "cleanupAttrs" => Box::new(CleanupAttrs),
         "removeUselessStrokeAndFill" => Box::new(RemoveUselessStrokeAndFill),
+        "cleanupEnableBackground" => Box::new(CleanupEnableBackground),
         "removeDimensions" => Box::new(RemoveDimensions),
         "moveGroupAttrsToElems" => Box::new(MoveGroupAttrsToElems),
         "moveElemsAttrsToGroup" => Box::new(MoveElemsAttrsToGroup),
