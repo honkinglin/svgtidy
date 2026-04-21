@@ -2,9 +2,9 @@ use crate::plugins::{
     CleanupAttrs, CleanupEnableBackground, CleanupIds, CleanupListOfValues, CleanupNumericValues,
     CollapseGroups, ConvertColors, ConvertEllipseToCircle, ConvertOneStopGradients,
     ConvertPathData, ConvertShapeToPath, ConvertStyleToAttrs, ConvertTransform, InlineStyles,
-    MergePaths, MergeStyles, MoveElemsAttrsToGroup, MoveGroupAttrsToElems, Plugin, RemoveComments,
-    RemoveDesc, RemoveDimensions, RemoveDoctype, RemoveEditorsNSData, RemoveEmptyAttrs,
-    RemoveEmptyContainers, RemoveEmptyText, RemoveHiddenElems, RemoveMetadata,
+    MergePaths, MergeStyles, MinifyStyles, MoveElemsAttrsToGroup, MoveGroupAttrsToElems, Plugin,
+    RemoveComments, RemoveDesc, RemoveDimensions, RemoveDoctype, RemoveEditorsNSData,
+    RemoveEmptyAttrs, RemoveEmptyContainers, RemoveEmptyText, RemoveHiddenElems, RemoveMetadata,
     RemoveNonInheritableGroupAttrs, RemoveRasterImages, RemoveScriptElement, RemoveStyleElement,
     RemoveTitle, RemoveUnknownsAndDefaults, RemoveUnusedNS, RemoveUselessDefs,
     RemoveUselessStrokeAndFill, RemoveXMLProcInst, SortAttrs, SortDefsChildren,
@@ -82,6 +82,10 @@ const PLUGIN_DESCRIPTORS: &[PluginDescriptor] = &[
     },
     PluginDescriptor {
         name: "inlineStyles",
+        enabled_by_default: true,
+    },
+    PluginDescriptor {
+        name: "minifyStyles",
         enabled_by_default: true,
     },
     PluginDescriptor {
@@ -259,6 +263,7 @@ fn build_plugin(name: &str, precision: usize) -> Box<dyn Plugin> {
         "removeStyleElement" => Box::new(RemoveStyleElement),
         "mergeStyles" => Box::new(MergeStyles),
         "inlineStyles" => Box::new(InlineStyles),
+        "minifyStyles" => Box::new(MinifyStyles),
         "convertStyleToAttrs" => Box::new(ConvertStyleToAttrs),
         "cleanupAttrs" => Box::new(CleanupAttrs),
         "removeUselessStrokeAndFill" => Box::new(RemoveUselessStrokeAndFill),

@@ -144,6 +144,7 @@ Options:
 | `cleanupAttrs` | Trims attribute whitespace. |
 | `mergeStyles` | Merges adjacent compatible `<style>` elements. |
 | `inlineStyles` | Inlines simple unique stylesheet rules into `style` attributes. |
+| `minifyStyles` | Minifies safely parseable CSS in `<style>` and `style` attributes. |
 | `mergePaths` | Conservatively merges adjacent simple paths when explicitly enabled. |
 | `convertShapeToPath` | Converts selected basic shapes (rect, line, poly*) to path. |
 | `convertPathData` | Optimizes path commands (relative, precision). |

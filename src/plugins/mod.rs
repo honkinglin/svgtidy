@@ -32,6 +32,7 @@ pub mod convert_transform;
 pub mod inline_styles;
 pub mod merge_paths;
 pub mod merge_styles;
+pub mod minify_styles;
 
 pub mod cleanup_list_of_values;
 pub mod remove_unknowns_and_defaults;
@@ -81,6 +82,7 @@ pub use convert_transform::ConvertTransform;
 pub use inline_styles::InlineStyles;
 pub use merge_paths::MergePaths;
 pub use merge_styles::MergeStyles;
+pub use minify_styles::MinifyStyles;
 
 pub use cleanup_list_of_values::CleanupListOfValues;
 pub use remove_unknowns_and_defaults::RemoveUnknownsAndDefaults;
