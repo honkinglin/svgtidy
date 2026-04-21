@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 10">
+  <style>.a,.b{fill:#000000;stroke:blue}</style>
+  <rect class="a" x="0" y="0" width="8" height="8"/>
+  <circle class="b" cx="15" cy="4" r="4"/>
+</svg>

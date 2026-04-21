@@ -13,7 +13,11 @@ impl Plugin for InlineStyles {
 
         let selectors: HashSet<SimpleSelector> = style_plans
             .iter()
-            .flat_map(|plan| plan.rules.iter().map(|rule| rule.selector.clone()))
+            .flat_map(|plan| {
+                plan.rules
+                    .iter()
+                    .flat_map(|rule| rule.selectors.iter().cloned())
+            })
             .collect();
 
         let matches = collect_selector_matches(&doc.root, &selectors);
@@ -27,30 +31,38 @@ impl Plugin for InlineStyles {
             let mut remaining_rules = Vec::new();
 
             for rule in plan.rules {
-                let Some(paths) = matches.get(&rule.selector) else {
-                    if let SimpleSelector::Class(name) = &rule.selector {
-                        remaining_classes.insert(name.clone());
-                    }
-                    remaining_rules.push(rule.raw);
-                    continue;
-                };
+                let mut remaining_selectors = Vec::new();
 
-                if paths.len() == 1 {
-                    inline_actions
-                        .entry(paths[0].clone())
-                        .or_default()
-                        .push(rule.declarations);
-                    if let SimpleSelector::Class(name) = rule.selector {
-                        inlined_classes
+                for selector in &rule.selectors {
+                    let Some(paths) = matches.get(selector) else {
+                        if let SimpleSelector::Class(name) = selector {
+                            remaining_classes.insert(name.clone());
+                        }
+                        remaining_selectors.push(selector.clone());
+                        continue;
+                    };
+
+                    if paths.len() == 1 {
+                        inline_actions
                             .entry(paths[0].clone())
                             .or_default()
-                            .push(name);
+                            .push(rule.declarations.clone());
+                        if let SimpleSelector::Class(name) = selector {
+                            inlined_classes
+                                .entry(paths[0].clone())
+                                .or_default()
+                                .push(name.clone());
+                        }
+                    } else {
+                        if let SimpleSelector::Class(name) = selector {
+                            remaining_classes.insert(name.clone());
+                        }
+                        remaining_selectors.push(selector.clone());
                     }
-                } else {
-                    if let SimpleSelector::Class(name) = &rule.selector {
-                        remaining_classes.insert(name.clone());
-                    }
-                    remaining_rules.push(rule.raw);
+                }
+
+                if !remaining_selectors.is_empty() {
+                    remaining_rules.push(format_rule(&remaining_selectors, &rule.declarations));
                 }
             }
 
@@ -85,9 +97,8 @@ struct StylePlan {
 }
 
 struct StyleRule {
-    selector: SimpleSelector,
+    selectors: Vec<SimpleSelector>,
     declarations: Vec<(String, String)>,
-    raw: String,
 }
 
 fn collect_style_plans(nodes: &[Node]) -> Vec<StylePlan> {
@@ -205,21 +216,29 @@ fn parse_stylesheet(css: &str) -> Option<Vec<StyleRule>> {
         }
 
         let body_end = cursor - 1;
-        let raw = css[selector_start..cursor].to_string();
-        let selector = parse_simple_selector(selector_raw)?;
+        let selectors = parse_selector_list(selector_raw)?;
         let declarations = parse_declarations(&css[body_start..body_end])?;
         if declarations.is_empty() {
             return None;
         }
 
         rules.push(StyleRule {
-            selector,
+            selectors,
             declarations,
-            raw,
         });
     }
 
     Some(rules)
+}
+
+fn parse_selector_list(selector_text: &str) -> Option<Vec<SimpleSelector>> {
+    let mut selectors = Vec::new();
+
+    for raw in selector_text.split(',') {
+        selectors.push(parse_simple_selector(raw)?);
+    }
+
+    (!selectors.is_empty()).then_some(selectors)
 }
 
 fn parse_simple_selector(selector: &str) -> Option<SimpleSelector> {
@@ -492,6 +511,26 @@ fn strip_class_names(
     }
 }
 
+fn format_rule(selectors: &[SimpleSelector], declarations: &[(String, String)]) -> String {
+    format!(
+        "{}{{{}}}",
+        selectors
+            .iter()
+            .map(format_selector)
+            .collect::<Vec<_>>()
+            .join(","),
+        format_style(declarations)
+    )
+}
+
+fn format_selector(selector: &SimpleSelector) -> String {
+    match selector {
+        SimpleSelector::Tag(name) => name.clone(),
+        SimpleSelector::Class(name) => format!(".{name}"),
+        SimpleSelector::Id(name) => format!("#{name}"),
+    }
+}
+
 fn format_style(declarations: &[(String, String)]) -> String {
     let declarations = prune_overridden_declarations(declarations);
     declarations
@@ -607,5 +646,26 @@ mod tests {
         let mut doc = parser::parse(input).unwrap();
         InlineStyles.apply(&mut doc);
         assert_eq!(printer::print(&doc), input);
+    }
+
+    #[test]
+    fn test_inline_grouped_simple_selectors() {
+        let input = "<svg><style>.a,.b{fill:red}</style><rect class=\"a\"/><circle class=\"b\"/></svg>";
+        let expected = "<svg><rect style=\"fill:red\"/><circle style=\"fill:red\"/></svg>";
+
+        let mut doc = parser::parse(input).unwrap();
+        InlineStyles.apply(&mut doc);
+        assert_eq!(printer::print(&doc), expected);
+    }
+
+    #[test]
+    fn test_keep_non_inlined_selector_from_group() {
+        let input = "<svg><style>.a,.b{fill:red}</style><rect class=\"a\"/><circle class=\"b\"/><path class=\"b\"/></svg>";
+        let expected =
+            "<svg><style>.b{fill:red}</style><rect style=\"fill:red\"/><circle class=\"b\"/><path class=\"b\"/></svg>";
+
+        let mut doc = parser::parse(input).unwrap();
+        InlineStyles.apply(&mut doc);
+        assert_eq!(printer::print(&doc), expected);
     }
 }
