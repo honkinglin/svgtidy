@@ -58,8 +58,6 @@ fn convert_rect(elem: &Element) -> Option<String> {
         .get("ry")
         .and_then(|v| v.parse::<f64>().ok());
 
-    // Simplification: handle regular rects first
-    // TODO: Handle rounded rects (rx, ry)
     if w == 0.0 || h == 0.0 {
         return None; // Invalid or invisible
     }
@@ -71,9 +69,80 @@ fn convert_rect(elem: &Element) -> Option<String> {
         return Some(format!("M{} {}h{}v{}h-{}z", x, y, w, h, w));
     }
 
-    // Rounded rects are complex to implement correctly with arcs.
-    // For now, let's skip complex rounded rects or implement basic.
-    None
+    let (rx, ry) = resolve_rect_radius(rx_raw, ry_raw, w, h)?;
+
+    if rx == 0.0 || ry == 0.0 {
+        return Some(format!("M{} {}h{}v{}h-{}z", x, y, w, h, w));
+    }
+
+    let horizontal = w - 2.0 * rx;
+    let vertical = h - 2.0 * ry;
+
+    let path_data = format!(
+        "M{} {}h{}a{} {} 0 0 1 {} {}v{}a{} {} 0 0 1 -{} {}h-{}a{} {} 0 0 1 -{} -{}v-{}a{} {} 0 0 1 {} -{}z",
+        x + rx,
+        y,
+        horizontal,
+        rx,
+        ry,
+        rx,
+        ry,
+        vertical,
+        rx,
+        ry,
+        rx,
+        ry,
+        horizontal,
+        rx,
+        ry,
+        rx,
+        ry,
+        vertical,
+        rx,
+        ry,
+        rx,
+        ry
+    );
+
+    if serialized_attr_len("d", &path_data)
+        >= serialized_present_shape_attrs_len(elem, &["x", "y", "width", "height", "rx", "ry"])
+    {
+        return None;
+    }
+
+    Some(path_data)
+}
+
+fn resolve_rect_radius(rx_raw: Option<f64>, ry_raw: Option<f64>, w: f64, h: f64) -> Option<(f64, f64)> {
+    let mut rx = match (rx_raw, ry_raw) {
+        (Some(rx), _) => rx,
+        (None, Some(ry)) => ry,
+        (None, None) => 0.0,
+    };
+    let mut ry = match (ry_raw, rx_raw) {
+        (Some(ry), _) => ry,
+        (None, Some(rx)) => rx,
+        (None, None) => 0.0,
+    };
+
+    if rx < 0.0 || ry < 0.0 {
+        return None;
+    }
+
+    rx = rx.min(w / 2.0);
+    ry = ry.min(h / 2.0);
+
+    Some((rx, ry))
+}
+
+fn serialized_present_shape_attrs_len(elem: &Element, attrs: &[&str]) -> usize {
+    attrs.iter()
+        .filter_map(|attr| elem.attributes.get(*attr).map(|value| serialized_attr_len(attr, value)))
+        .sum()
+}
+
+fn serialized_attr_len(name: &str, value: &str) -> usize {
+    name.len() + value.len() + 4
 }
 
 fn convert_line(elem: &Element) -> Option<String> {
@@ -192,5 +261,22 @@ mod tests {
         let out = printer::print(&doc);
         assert!(out.contains("path"));
         assert!(out.contains("d=\"M0 0L100 0L100 100z"));
+    }
+
+    #[test]
+    fn test_keep_rounded_rect_when_path_would_grow() {
+        let input = "<svg><rect x=\"10\" y=\"20\" width=\"100\" height=\"50\" rx=\"8\" ry=\"6\"/></svg>";
+
+        let mut doc = parser::parse(input).unwrap();
+        ConvertShapeToPath.apply(&mut doc);
+        assert_eq!(printer::print(&doc), input);
+    }
+
+    #[test]
+    fn test_resolve_rect_radius_inherits_missing_axis() {
+        assert_eq!(
+            resolve_rect_radius(Some(8.0), None, 20.0, 10.0),
+            Some((8.0, 5.0))
+        );
     }
 }

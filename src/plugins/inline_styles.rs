@@ -374,12 +374,18 @@ fn apply_inline_actions(
                 }
 
                 if let Some(existing) = elem.attributes.get("style").cloned() {
-                    let mut style = format_style(&declarations);
-                    if !style.is_empty() && !existing.is_empty() {
-                        style.push(';');
+                    if let Some(existing_declarations) = parse_declarations(&existing) {
+                        declarations.extend(existing_declarations);
+                        elem.attributes
+                            .insert("style".to_string(), format_style(&declarations));
+                    } else {
+                        let mut style = format_style(&declarations);
+                        if !style.is_empty() && !existing.is_empty() {
+                            style.push(';');
+                        }
+                        style.push_str(&existing);
+                        elem.attributes.insert("style".to_string(), style);
                     }
-                    style.push_str(&existing);
-                    elem.attributes.insert("style".to_string(), style);
                 } else if !declarations.is_empty() {
                     elem.attributes
                         .insert("style".to_string(), format_style(&declarations));
@@ -487,11 +493,34 @@ fn strip_class_names(
 }
 
 fn format_style(declarations: &[(String, String)]) -> String {
+    let declarations = prune_overridden_declarations(declarations);
     declarations
-        .iter()
+        .into_iter()
         .map(|(key, value)| format!("{key}:{value}"))
         .collect::<Vec<_>>()
         .join(";")
+}
+
+fn prune_overridden_declarations(declarations: &[(String, String)]) -> Vec<(String, String)> {
+    let mut seen = HashSet::new();
+    let mut kept = Vec::with_capacity(declarations.len());
+
+    for (key, value) in declarations.iter().rev() {
+        if can_prune_declaration(key, value) {
+            if seen.insert(key.clone()) {
+                kept.push((key.clone(), value.clone()));
+            }
+        } else {
+            kept.push((key.clone(), value.clone()));
+        }
+    }
+
+    kept.reverse();
+    kept
+}
+
+fn can_prune_declaration(key: &str, value: &str) -> bool {
+    !key.starts_with("--") && !value.contains("!important")
 }
 
 #[cfg(test)]
@@ -513,7 +542,18 @@ mod tests {
     #[test]
     fn test_existing_inline_style_keeps_precedence() {
         let input = "<svg><style>.a{fill:red;stroke:black}</style><rect class=\"a\" style=\"stroke: blue\"/></svg>";
-        let expected = "<svg><rect style=\"fill:red;stroke:black;stroke: blue\"/></svg>";
+        let expected = "<svg><rect style=\"fill:red;stroke:blue\"/></svg>";
+
+        let mut doc = parser::parse(input).unwrap();
+        InlineStyles.apply(&mut doc);
+        assert_eq!(printer::print(&doc), expected);
+    }
+
+    #[test]
+    fn test_keep_important_declaration_when_merging_styles() {
+        let input =
+            "<svg><style>.a{stroke:black!important}</style><rect class=\"a\" style=\"stroke:blue\"/></svg>";
+        let expected = "<svg><rect style=\"stroke:black!important;stroke:blue\"/></svg>";
 
         let mut doc = parser::parse(input).unwrap();
         InlineStyles.apply(&mut doc);

@@ -442,33 +442,39 @@ fn stringify_optimized(commands: &[Command], opts: &ConvertPathData) -> String {
                 // V y (if x == cur_x)
                 // v dy (if x == cur_x)
 
-                let mut best_str = format!("L{} {}", abs_x_s, abs_y_s);
                 let rel_l = format!("l{} {}", rel_x_s, rel_y_s);
-                if rel_l.len() < best_str.len() {
-                    best_str = rel_l;
-                }
+                let abs_l = format!("L{} {}", abs_x_s, abs_y_s);
+                let mut best_str = if rel_l.len() <= abs_l.len() {
+                    rel_l
+                } else {
+                    abs_l
+                };
 
                 // H/h check (check rounded values to be safe?)
                 // Effectively we check if diff is close to 0.
                 if (y - cur_y).abs() < f64::EPSILON {
                     let abs_h = format!("H{}", abs_x_s);
                     let rel_h = format!("h{}", rel_x_s);
-                    if abs_h.len() < best_str.len() {
-                        best_str = abs_h;
-                    }
-                    if rel_h.len() < best_str.len() {
-                        best_str = rel_h;
+                    let best_h = if rel_h.len() <= abs_h.len() {
+                        rel_h
+                    } else {
+                        abs_h
+                    };
+                    if best_h.len() <= best_str.len() {
+                        best_str = best_h;
                     }
                 }
 
                 if (x - cur_x).abs() < f64::EPSILON {
                     let abs_v = format!("V{}", abs_y_s);
                     let rel_v = format!("v{}", rel_y_s);
-                    if abs_v.len() < best_str.len() {
-                        best_str = abs_v;
-                    }
-                    if rel_v.len() < best_str.len() {
-                        best_str = rel_v;
+                    let best_v = if rel_v.len() <= abs_v.len() {
+                        rel_v
+                    } else {
+                        abs_v
+                    };
+                    if best_v.len() <= best_str.len() {
+                        best_str = best_v;
                     }
                 }
 
@@ -480,7 +486,7 @@ fn stringify_optimized(commands: &[Command], opts: &ConvertPathData) -> String {
                 // Just optimize to H/h
                 let abs_s = format!("H{}", format_num(*x, p));
                 let rel_s = format!("h{}", format_num(*x - cur_x, p));
-                if rel_s.len() < abs_s.len() {
+                if rel_s.len() <= abs_s.len() {
                     s.push_str(&rel_s);
                 } else {
                     s.push_str(&abs_s);
@@ -490,7 +496,7 @@ fn stringify_optimized(commands: &[Command], opts: &ConvertPathData) -> String {
             Command::Vert(y) => {
                 let abs_s = format!("V{}", format_num(*y, p));
                 let rel_s = format!("v{}", format_num(*y - cur_y, p));
-                if rel_s.len() < abs_s.len() {
+                if rel_s.len() <= abs_s.len() {
                     s.push_str(&rel_s);
                 } else {
                     s.push_str(&abs_s);
@@ -526,7 +532,7 @@ fn stringify_optimized(commands: &[Command], opts: &ConvertPathData) -> String {
                 let abs_s = format!("C{}", abs_coords);
                 let rel_s = format!("c{}", rel_coords);
 
-                if rel_s.len() < abs_s.len() {
+                if rel_s.len() <= abs_s.len() {
                     s.push_str(&rel_s);
                 } else {
                     s.push_str(&abs_s);
@@ -553,7 +559,7 @@ fn stringify_optimized(commands: &[Command], opts: &ConvertPathData) -> String {
                 let abs_s = format!("S{}", abs_coords);
                 let rel_s = format!("s{}", rel_coords);
 
-                if rel_s.len() < abs_s.len() {
+                if rel_s.len() <= abs_s.len() {
                     s.push_str(&rel_s);
                 } else {
                     s.push_str(&abs_s);
@@ -580,7 +586,7 @@ fn stringify_optimized(commands: &[Command], opts: &ConvertPathData) -> String {
                 let abs_s = format!("Q{}", abs_coords);
                 let rel_s = format!("q{}", rel_coords);
 
-                if rel_s.len() < abs_s.len() {
+                if rel_s.len() <= abs_s.len() {
                     s.push_str(&rel_s);
                 } else {
                     s.push_str(&abs_s);
@@ -599,7 +605,7 @@ fn stringify_optimized(commands: &[Command], opts: &ConvertPathData) -> String {
                 let abs_s = format!("T{}", abs_coords);
                 let rel_s = format!("t{}", rel_coords);
 
-                if rel_s.len() < abs_s.len() {
+                if rel_s.len() <= abs_s.len() {
                     s.push_str(&rel_s);
                 } else {
                     s.push_str(&abs_s);
@@ -636,7 +642,7 @@ fn stringify_optimized(commands: &[Command], opts: &ConvertPathData) -> String {
                 let abs_s = format!("A{}", abs_coords);
                 let rel_s = format!("a{}", rel_coords);
 
-                if rel_s.len() < abs_s.len() {
+                if rel_s.len() <= abs_s.len() {
                     s.push_str(&rel_s);
                 } else {
                     s.push_str(&abs_s);
@@ -752,10 +758,10 @@ mod tests {
         // M 10 10 L 20 10
         // L 20 10 (7)
         // l 10 0 (6)
-        // H 20 (3) -> Wins
+        // H 20 / h 10 are both 3 chars, prefer relative on ties.
         let input = "M 10 10 L 20 10";
         let out = optimize_path_data(input, &ConvertPathData::default());
-        assert_eq!(out, "M10 10H20");
+        assert_eq!(out, "M10 10h10");
     }
 
     #[test]
