@@ -394,6 +394,136 @@ fn format_num(n: f64, p: usize) -> String {
     }
 }
 
+fn needs_separator(prev: char, next: char) -> bool {
+    matches!(prev, '0'..='9' | '.')
+        && matches!(next, '0'..='9' | '.' | '+')
+}
+
+fn append_fragment(out: &mut String, fragment: &str) {
+    if fragment.is_empty() {
+        return;
+    }
+
+    if let (Some(prev), Some(next)) = (out.chars().last(), fragment.chars().next()) {
+        if needs_separator(prev, next) {
+            out.push(' ');
+        }
+    }
+
+    out.push_str(fragment);
+}
+
+fn format_pair(a: f64, b: f64, p: usize) -> String {
+    let mut out = format_num(a, p);
+    let second = format_num(b, p);
+    append_fragment(&mut out, &second);
+    out
+}
+
+fn best_move_fragment(cur_x: f64, cur_y: f64, x: f64, y: f64, p: usize) -> String {
+    let abs_str = format!("M{}", format_pair(x, y, p));
+    let rel_str = format!("m{}", format_pair(x - cur_x, y - cur_y, p));
+
+    if rel_str.len() < abs_str.len() {
+        rel_str
+    } else {
+        abs_str
+    }
+}
+
+fn best_line_fragment(cur_x: f64, cur_y: f64, x: f64, y: f64, p: usize) -> String {
+    let abs_x_s = format_num(x, p);
+    let abs_y_s = format_num(y, p);
+    let rel_x_s = format_num(x - cur_x, p);
+    let rel_y_s = format_num(y - cur_y, p);
+
+    let rel_l = format!("l{}", format_pair(x - cur_x, y - cur_y, p));
+    let abs_l = format!("L{}", format_pair(x, y, p));
+    let mut best_str = if rel_l.len() <= abs_l.len() {
+        rel_l
+    } else {
+        abs_l
+    };
+
+    if (y - cur_y).abs() < f64::EPSILON {
+        let abs_h = format!("H{}", abs_x_s);
+        let rel_h = format!("h{}", rel_x_s);
+        let best_h = if rel_h.len() <= abs_h.len() {
+            rel_h
+        } else {
+            abs_h
+        };
+        if best_h.len() <= best_str.len() {
+            best_str = best_h;
+        }
+    }
+
+    if (x - cur_x).abs() < f64::EPSILON {
+        let abs_v = format!("V{}", abs_y_s);
+        let rel_v = format!("v{}", rel_y_s);
+        let best_v = if rel_v.len() <= abs_v.len() {
+            rel_v
+        } else {
+            abs_v
+        };
+        if best_v.len() <= best_str.len() {
+            best_str = best_v;
+        }
+    }
+
+    best_str
+}
+
+fn serialize_move_line_run(
+    commands: &[Command],
+    cur_x: f64,
+    cur_y: f64,
+    p: usize,
+) -> (String, f64, f64) {
+    let Command::Move(move_x, move_y) = commands[0] else {
+        unreachable!("move-line run must start with Move");
+    };
+
+    let mut naive = best_move_fragment(cur_x, cur_y, move_x, move_y, p);
+    let mut naive_x = move_x;
+    let mut naive_y = move_y;
+    for cmd in &commands[1..] {
+        let Command::Line(x, y) = cmd else {
+            unreachable!("move-line run must only contain Line commands after Move");
+        };
+        naive.push_str(&best_line_fragment(naive_x, naive_y, *x, *y, p));
+        naive_x = *x;
+        naive_y = *y;
+    }
+
+    let mut implicit_abs = format!("M{}", format_pair(move_x, move_y, p));
+    for cmd in &commands[1..] {
+        let Command::Line(x, y) = cmd else {
+            unreachable!("move-line run must only contain Line commands after Move");
+        };
+        append_fragment(&mut implicit_abs, &format_pair(*x, *y, p));
+    }
+
+    let mut implicit_rel = format!("m{}", format_pair(move_x - cur_x, move_y - cur_y, p));
+    let mut rel_x = move_x;
+    let mut rel_y = move_y;
+    for cmd in &commands[1..] {
+        let Command::Line(x, y) = cmd else {
+            unreachable!("move-line run must only contain Line commands after Move");
+        };
+        append_fragment(&mut implicit_rel, &format_pair(*x - rel_x, *y - rel_y, p));
+        rel_x = *x;
+        rel_y = *y;
+    }
+
+    let best = [naive, implicit_abs, implicit_rel]
+        .into_iter()
+        .min_by_key(|candidate| candidate.len())
+        .unwrap();
+
+    (best, naive_x, naive_y)
+}
+
 fn stringify_optimized(commands: &[Command], opts: &ConvertPathData) -> String {
     let mut s = String::new();
     let p = opts.float_precision;
@@ -404,24 +534,32 @@ fn stringify_optimized(commands: &[Command], opts: &ConvertPathData) -> String {
     let mut subpath_start_x = 0.0;
     let mut subpath_start_y = 0.0;
 
-    for cmd in commands {
+    let mut index = 0;
+    while index < commands.len() {
+        if matches!(commands[index], Command::Move(_, _)) {
+            let mut end = index + 1;
+            while end < commands.len() && matches!(commands[end], Command::Line(_, _)) {
+                end += 1;
+            }
+
+            if end > index + 1 {
+                let (fragment, x, y) = serialize_move_line_run(&commands[index..end], cur_x, cur_y, p);
+                s.push_str(&fragment);
+                cur_x = x;
+                cur_y = y;
+                if let Command::Move(move_x, move_y) = commands[index] {
+                    subpath_start_x = move_x;
+                    subpath_start_y = move_y;
+                }
+                index = end;
+                continue;
+            }
+        }
+
+        let cmd = &commands[index];
         match cmd {
             Command::Move(x, y) => {
-                // Always M? Or m?
-                // M is usually safest/clearest for start.
-                // relative m is only relative to (0,0) if first, or prev command.
-                let abs_str = format!("M{} {}", format_num(*x, p), format_num(*y, p));
-                let rel_str = format!(
-                    "m{} {}",
-                    format_num(*x - cur_x, p),
-                    format_num(*y - cur_y, p)
-                );
-
-                if rel_str.len() < abs_str.len() {
-                    s.push_str(&rel_str);
-                } else {
-                    s.push_str(&abs_str);
-                }
+                s.push_str(&best_move_fragment(cur_x, cur_y, *x, *y, p));
 
                 cur_x = *x;
                 cur_y = *y;
@@ -429,56 +567,7 @@ fn stringify_optimized(commands: &[Command], opts: &ConvertPathData) -> String {
                 subpath_start_y = *y;
             }
             Command::Line(x, y) => {
-                let abs_x_s = format_num(*x, p);
-                let abs_y_s = format_num(*y, p);
-                let rel_x_s = format_num(*x - cur_x, p);
-                let rel_y_s = format_num(*y - cur_y, p);
-
-                // Candidates:
-                // L x y
-                // l dx dy
-                // H x (if y == cur_y)
-                // h dx (if y == cur_y)
-                // V y (if x == cur_x)
-                // v dy (if x == cur_x)
-
-                let rel_l = format!("l{} {}", rel_x_s, rel_y_s);
-                let abs_l = format!("L{} {}", abs_x_s, abs_y_s);
-                let mut best_str = if rel_l.len() <= abs_l.len() {
-                    rel_l
-                } else {
-                    abs_l
-                };
-
-                // H/h check (check rounded values to be safe?)
-                // Effectively we check if diff is close to 0.
-                if (y - cur_y).abs() < f64::EPSILON {
-                    let abs_h = format!("H{}", abs_x_s);
-                    let rel_h = format!("h{}", rel_x_s);
-                    let best_h = if rel_h.len() <= abs_h.len() {
-                        rel_h
-                    } else {
-                        abs_h
-                    };
-                    if best_h.len() <= best_str.len() {
-                        best_str = best_h;
-                    }
-                }
-
-                if (x - cur_x).abs() < f64::EPSILON {
-                    let abs_v = format!("V{}", abs_y_s);
-                    let rel_v = format!("v{}", rel_y_s);
-                    let best_v = if rel_v.len() <= abs_v.len() {
-                        rel_v
-                    } else {
-                        abs_v
-                    };
-                    if best_v.len() <= best_str.len() {
-                        best_str = best_v;
-                    }
-                }
-
-                s.push_str(&best_str);
+                s.push_str(&best_line_fragment(cur_x, cur_y, *x, *y, p));
                 cur_x = *x;
                 cur_y = *y;
             }
@@ -651,6 +740,8 @@ fn stringify_optimized(commands: &[Command], opts: &ConvertPathData) -> String {
                 cur_y = *y;
             }
         }
+
+        index += 1;
     }
 
     s
@@ -762,6 +853,13 @@ mod tests {
         let input = "M 10 10 L 20 10";
         let out = optimize_path_data(input, &ConvertPathData::default());
         assert_eq!(out, "M10 10h10");
+    }
+
+    #[test]
+    fn test_optimize_line_run_after_move() {
+        let input = "M2 2L10 10L18 2";
+        let out = optimize_path_data(input, &ConvertPathData::default());
+        assert_eq!(out, "M2 2l8 8l8-8");
     }
 
     #[test]
