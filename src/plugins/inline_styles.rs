@@ -20,12 +20,17 @@ impl Plugin for InlineStyles {
 
         let mut inline_actions: HashMap<Vec<usize>, Vec<Vec<(String, String)>>> = HashMap::new();
         let mut style_updates: HashMap<Vec<usize>, Option<String>> = HashMap::new();
+        let mut inlined_classes: HashMap<Vec<usize>, Vec<String>> = HashMap::new();
+        let mut remaining_classes = HashSet::new();
 
         for plan in style_plans {
             let mut remaining_rules = Vec::new();
 
             for rule in plan.rules {
                 let Some(paths) = matches.get(&rule.selector) else {
+                    if let SimpleSelector::Class(name) = &rule.selector {
+                        remaining_classes.insert(name.clone());
+                    }
                     remaining_rules.push(rule.raw);
                     continue;
                 };
@@ -35,7 +40,16 @@ impl Plugin for InlineStyles {
                         .entry(paths[0].clone())
                         .or_default()
                         .push(rule.declarations);
+                    if let SimpleSelector::Class(name) = rule.selector {
+                        inlined_classes
+                            .entry(paths[0].clone())
+                            .or_default()
+                            .push(name);
+                    }
                 } else {
+                    if let SimpleSelector::Class(name) = &rule.selector {
+                        remaining_classes.insert(name.clone());
+                    }
                     remaining_rules.push(rule.raw);
                 }
             }
@@ -48,6 +62,12 @@ impl Plugin for InlineStyles {
         }
 
         apply_inline_actions(&mut doc.root, &inline_actions, &mut Vec::new());
+        remove_inlined_classes(
+            &mut doc.root,
+            &inlined_classes,
+            &remaining_classes,
+            &mut Vec::new(),
+        );
         rewrite_style_elements(&mut doc.root, &style_updates, &mut Vec::new());
     }
 }
@@ -414,6 +434,58 @@ fn rewrite_style_elements(
     *nodes = rewritten;
 }
 
+fn remove_inlined_classes(
+    nodes: &mut Vec<Node>,
+    inlined_classes: &HashMap<Vec<usize>, Vec<String>>,
+    remaining_classes: &HashSet<String>,
+    path: &mut Vec<usize>,
+) {
+    for (index, node) in nodes.iter_mut().enumerate() {
+        path.push(index);
+
+        if let Node::Element(elem) = node {
+            if let Some(class_names) = inlined_classes.get(path) {
+                strip_class_names(elem, class_names, remaining_classes);
+            }
+
+            remove_inlined_classes(&mut elem.children, inlined_classes, remaining_classes, path);
+        }
+
+        path.pop();
+    }
+}
+
+fn strip_class_names(
+    elem: &mut Element,
+    class_names: &[String],
+    remaining_classes: &HashSet<String>,
+) {
+    let Some(class_attr) = elem.attributes.get("class").cloned() else {
+        return;
+    };
+
+    let removable: HashSet<&str> = class_names
+        .iter()
+        .map(String::as_str)
+        .filter(|name| !remaining_classes.contains(*name))
+        .collect();
+    if removable.is_empty() {
+        return;
+    }
+
+    let kept: Vec<&str> = class_attr
+        .split_whitespace()
+        .filter(|class_name| !removable.contains(*class_name))
+        .collect();
+
+    if kept.is_empty() {
+        elem.attributes.shift_remove("class");
+    } else if kept.len() * 2 - 1 < class_attr.len() {
+        elem.attributes
+            .insert("class".to_string(), kept.join(" "));
+    }
+}
+
 fn format_style(declarations: &[(String, String)]) -> String {
     declarations
         .iter()
@@ -431,7 +503,7 @@ mod tests {
     #[test]
     fn test_inline_unique_class_selector() {
         let input = "<svg><style>.a{fill:red}</style><rect class=\"a\"/></svg>";
-        let expected = "<svg><rect class=\"a\" style=\"fill:red\"/></svg>";
+        let expected = "<svg><rect style=\"fill:red\"/></svg>";
 
         let mut doc = parser::parse(input).unwrap();
         InlineStyles.apply(&mut doc);
@@ -441,7 +513,7 @@ mod tests {
     #[test]
     fn test_existing_inline_style_keeps_precedence() {
         let input = "<svg><style>.a{fill:red;stroke:black}</style><rect class=\"a\" style=\"stroke: blue\"/></svg>";
-        let expected = "<svg><rect class=\"a\" style=\"fill:red;stroke:black;stroke: blue\"/></svg>";
+        let expected = "<svg><rect style=\"fill:red;stroke:black;stroke: blue\"/></svg>";
 
         let mut doc = parser::parse(input).unwrap();
         InlineStyles.apply(&mut doc);
@@ -471,10 +543,29 @@ mod tests {
     fn test_remove_only_inlined_rule() {
         let input = "<svg><style>.a{fill:red}.b{stroke:blue}</style><rect class=\"a\"/><rect class=\"b\"/><circle class=\"b\"/></svg>";
         let expected =
-            "<svg><style>.b{stroke:blue}</style><rect class=\"a\" style=\"fill:red\"/><rect class=\"b\"/><circle class=\"b\"/></svg>";
+            "<svg><style>.b{stroke:blue}</style><rect style=\"fill:red\"/><rect class=\"b\"/><circle class=\"b\"/></svg>";
 
         let mut doc = parser::parse(input).unwrap();
         InlineStyles.apply(&mut doc);
         assert_eq!(printer::print(&doc), expected);
+    }
+
+    #[test]
+    fn test_remove_inlined_class_from_multi_class_attr() {
+        let input = "<svg><style>.a{fill:red}</style><rect class=\"a keep\"/></svg>";
+        let expected = "<svg><rect class=\"keep\" style=\"fill:red\"/></svg>";
+
+        let mut doc = parser::parse(input).unwrap();
+        InlineStyles.apply(&mut doc);
+        assert_eq!(printer::print(&doc), expected);
+    }
+
+    #[test]
+    fn test_keep_class_when_same_selector_remains() {
+        let input = "<svg><style>.a{fill:red}.a{stroke:blue}</style><rect class=\"a\"/><circle class=\"a\"/></svg>";
+
+        let mut doc = parser::parse(input).unwrap();
+        InlineStyles.apply(&mut doc);
+        assert_eq!(printer::print(&doc), input);
     }
 }

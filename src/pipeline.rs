@@ -412,10 +412,7 @@ mod tests {
 
         apply_default_pipeline(&mut doc, &OptimizeOptions::default());
 
-        assert_eq!(
-            printer::print(&doc),
-            "<svg><rect class=\"a\" style=\"fill:red\"/></svg>"
-        );
+        assert_eq!(printer::print(&doc), "<svg><rect style=\"fill:red\"/></svg>");
     }
 
     #[test]
@@ -429,7 +426,7 @@ mod tests {
 
         assert_eq!(
             printer::print(&doc),
-            "<svg><path class=\"a\" d=\"M0 0\" style=\"fill:red;stroke:#00f\"/></svg>"
+            "<svg><path d=\"M0 0\" style=\"fill:red;stroke:#00f\"/></svg>"
         );
     }
 }
