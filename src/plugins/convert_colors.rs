@@ -8,20 +8,26 @@ pub struct ConvertColors;
 
 impl Plugin for ConvertColors {
     fn apply(&self, doc: &mut Document) {
-        convert_colors_in_nodes(&mut doc.root);
+        let has_style_element = document_has_style_element(&doc.root);
+        convert_colors_in_nodes(&mut doc.root, false, has_style_element);
     }
 }
 
-fn convert_colors_in_nodes(nodes: &mut Vec<Node>) {
+fn convert_colors_in_nodes(
+    nodes: &mut Vec<Node>,
+    ancestor_has_fill: bool,
+    has_style_element: bool,
+) {
     for node in nodes {
         if let Node::Element(elem) = node {
-            convert_element_colors(elem);
-            convert_colors_in_nodes(&mut elem.children);
+            convert_element_colors(elem, ancestor_has_fill, has_style_element);
+            let child_has_fill = ancestor_has_fill || element_sets_fill(elem);
+            convert_colors_in_nodes(&mut elem.children, child_has_fill, has_style_element);
         }
     }
 }
 
-fn convert_element_colors(elem: &mut Element) {
+fn convert_element_colors(elem: &mut Element, ancestor_has_fill: bool, has_style_element: bool) {
     // Attributes that contain colors
     let color_attrs = [
         "fill",
@@ -38,7 +44,30 @@ fn convert_element_colors(elem: &mut Element) {
         }
     }
 
-    // Handle style attribute? (Complexity: parsing CSS. Skipping for now as SVGO usually handles this in a separate pass or complex parser)
+    if !has_style_element
+        && !ancestor_has_fill
+        && elem
+            .attributes
+            .get("fill")
+            .is_some_and(|value| matches!(value.as_str(), "#000" | "black"))
+    {
+        elem.attributes.shift_remove("fill");
+    }
+}
+
+fn document_has_style_element(nodes: &[Node]) -> bool {
+    nodes.iter().any(|node| match node {
+        Node::Element(elem) => elem.name == "style" || document_has_style_element(&elem.children),
+        _ => false,
+    })
+}
+
+fn element_sets_fill(elem: &Element) -> bool {
+    elem.attributes.contains_key("fill")
+        || elem
+            .attributes
+            .get("style")
+            .is_some_and(|style| style.contains("fill:"))
 }
 
 pub(crate) fn convert_color(val: &str) -> String {
@@ -169,6 +198,33 @@ mod tests {
     fn test_convert_equal_length_named_color() {
         let input = "<svg stroke=\"blue\"></svg>";
         let expected = "<svg stroke=\"#00f\"/>";
+        let mut doc = parser::parse(input).unwrap();
+        ConvertColors.apply(&mut doc);
+        assert_eq!(printer::print(&doc), expected);
+    }
+
+    #[test]
+    fn test_remove_default_black_fill_without_inherited_fill() {
+        let input = "<svg><path fill=\"black\"/></svg>";
+        let expected = "<svg><path/></svg>";
+        let mut doc = parser::parse(input).unwrap();
+        ConvertColors.apply(&mut doc);
+        assert_eq!(printer::print(&doc), expected);
+    }
+
+    #[test]
+    fn test_keep_black_fill_when_parent_sets_fill() {
+        let input = "<svg><g fill=\"red\"><path fill=\"black\"/></g></svg>";
+        let expected = "<svg><g fill=\"red\"><path fill=\"#000\"/></g></svg>";
+        let mut doc = parser::parse(input).unwrap();
+        ConvertColors.apply(&mut doc);
+        assert_eq!(printer::print(&doc), expected);
+    }
+
+    #[test]
+    fn test_keep_black_fill_when_style_element_exists() {
+        let input = "<svg><style>path{fill:red}</style><path fill=\"black\"/></svg>";
+        let expected = "<svg><style>path{fill:red}</style><path fill=\"#000\"/></svg>";
         let mut doc = parser::parse(input).unwrap();
         ConvertColors.apply(&mut doc);
         assert_eq!(printer::print(&doc), expected);

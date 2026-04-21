@@ -32,6 +32,7 @@ fn should_remove_default(elem_name: &str, key: &str, value: &str) -> bool {
         "stroke-width" => is_one(value),
         "stroke-opacity" | "fill-opacity" | "stop-opacity" => value == "1",
         "letter-spacing" | "word-spacing" => value == "normal",
+        "dx" | "dy" => is_zero(value) && elem_name == "feOffset",
 
         // Shape-position defaults are only removed for element types where omission
         // is known to be equivalent. Keep the rules conservative.
@@ -96,5 +97,16 @@ mod tests {
         RemoveUnknownsAndDefaults.apply(&mut doc);
 
         assert_eq!(printer::print(&doc), input);
+    }
+
+    #[test]
+    fn test_remove_zero_dx_on_fe_offset() {
+        let input = "<svg><filter><feOffset dx=\"0\" dy=\"2\"/></filter></svg>";
+        let expected = "<svg><filter><feOffset dy=\"2\"/></filter></svg>";
+
+        let mut doc = parser::parse(input).unwrap();
+        RemoveUnknownsAndDefaults.apply(&mut doc);
+
+        assert_eq!(printer::print(&doc), expected);
     }
 }
