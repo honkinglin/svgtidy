@@ -1,3 +1,4 @@
+use super::convert_colors::convert_color;
 use crate::plugins::Plugin;
 use crate::tree::{Document, Element, Node};
 
@@ -250,9 +251,24 @@ fn parse_declaration(raw: &str, declarations: &mut Vec<(String, String)>) -> Opt
 fn format_declarations(declarations: &[(String, String)]) -> String {
     declarations
         .iter()
-        .map(|(key, value)| format!("{key}:{value}"))
+        .map(|(key, value)| format!("{key}:{}", minify_value(key, value)))
         .collect::<Vec<_>>()
         .join(";")
+}
+
+fn minify_value(key: &str, value: &str) -> String {
+    if is_color_property(key) {
+        return convert_color(value);
+    }
+
+    value.to_string()
+}
+
+fn is_color_property(key: &str) -> bool {
+    matches!(
+        key,
+        "fill" | "stroke" | "stop-color" | "flood-color" | "lighting-color"
+    )
 }
 
 #[cfg(test)]
@@ -264,7 +280,7 @@ mod tests {
     #[test]
     fn test_minify_style_attribute() {
         let input = "<svg><rect style=\" fill : red ; stroke : blue ; \"/></svg>";
-        let expected = "<svg><rect style=\"fill:red;stroke:blue\"/></svg>";
+        let expected = "<svg><rect style=\"fill:red;stroke:#00f\"/></svg>";
 
         let mut doc = parser::parse(input).unwrap();
         MinifyStyles.apply(&mut doc);
@@ -274,7 +290,7 @@ mod tests {
     #[test]
     fn test_minify_style_element() {
         let input = "<svg><style> .a { fill : red ; stroke : blue ; } </style></svg>";
-        let expected = "<svg><style>.a{fill:red;stroke:blue}</style></svg>";
+        let expected = "<svg><style>.a{fill:red;stroke:#00f}</style></svg>";
 
         let mut doc = parser::parse(input).unwrap();
         MinifyStyles.apply(&mut doc);
@@ -298,5 +314,15 @@ mod tests {
         let mut doc = parser::parse(input).unwrap();
         MinifyStyles.apply(&mut doc);
         assert_eq!(printer::print(&doc), input);
+    }
+
+    #[test]
+    fn test_only_minify_color_properties() {
+        let input = "<svg><rect style=\"color: blue; cursor: blue\"/></svg>";
+        let expected = "<svg><rect style=\"color:blue;cursor:blue\"/></svg>";
+
+        let mut doc = parser::parse(input).unwrap();
+        MinifyStyles.apply(&mut doc);
+        assert_eq!(printer::print(&doc), expected);
     }
 }

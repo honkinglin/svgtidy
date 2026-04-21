@@ -356,7 +356,7 @@ fn apply_inline_actions(
                 if let Some(existing) = elem.attributes.get("style").cloned() {
                     let mut style = format_style(&declarations);
                     if !style.is_empty() && !existing.is_empty() {
-                        style.push_str("; ");
+                        style.push(';');
                     }
                     style.push_str(&existing);
                     elem.attributes.insert("style".to_string(), style);
@@ -417,9 +417,9 @@ fn rewrite_style_elements(
 fn format_style(declarations: &[(String, String)]) -> String {
     declarations
         .iter()
-        .map(|(key, value)| format!("{key}: {value}"))
+        .map(|(key, value)| format!("{key}:{value}"))
         .collect::<Vec<_>>()
-        .join("; ")
+        .join(";")
 }
 
 #[cfg(test)]
@@ -431,7 +431,7 @@ mod tests {
     #[test]
     fn test_inline_unique_class_selector() {
         let input = "<svg><style>.a{fill:red}</style><rect class=\"a\"/></svg>";
-        let expected = "<svg><rect class=\"a\" style=\"fill: red\"/></svg>";
+        let expected = "<svg><rect class=\"a\" style=\"fill:red\"/></svg>";
 
         let mut doc = parser::parse(input).unwrap();
         InlineStyles.apply(&mut doc);
@@ -441,8 +441,7 @@ mod tests {
     #[test]
     fn test_existing_inline_style_keeps_precedence() {
         let input = "<svg><style>.a{fill:red;stroke:black}</style><rect class=\"a\" style=\"stroke: blue\"/></svg>";
-        let expected =
-            "<svg><rect class=\"a\" style=\"fill: red; stroke: black; stroke: blue\"/></svg>";
+        let expected = "<svg><rect class=\"a\" style=\"fill:red;stroke:black;stroke: blue\"/></svg>";
 
         let mut doc = parser::parse(input).unwrap();
         InlineStyles.apply(&mut doc);
@@ -472,7 +471,7 @@ mod tests {
     fn test_remove_only_inlined_rule() {
         let input = "<svg><style>.a{fill:red}.b{stroke:blue}</style><rect class=\"a\"/><rect class=\"b\"/><circle class=\"b\"/></svg>";
         let expected =
-            "<svg><style>.b{stroke:blue}</style><rect class=\"a\" style=\"fill: red\"/><rect class=\"b\"/><circle class=\"b\"/></svg>";
+            "<svg><style>.b{stroke:blue}</style><rect class=\"a\" style=\"fill:red\"/><rect class=\"b\"/><circle class=\"b\"/></svg>";
 
         let mut doc = parser::parse(input).unwrap();
         InlineStyles.apply(&mut doc);

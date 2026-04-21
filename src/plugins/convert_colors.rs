@@ -41,7 +41,7 @@ fn convert_element_colors(elem: &mut Element) {
     // Handle style attribute? (Complexity: parsing CSS. Skipping for now as SVGO usually handles this in a separate pass or complex parser)
 }
 
-fn convert_color(val: &str) -> String {
+pub(crate) fn convert_color(val: &str) -> String {
     let lower = val.to_lowercase();
 
     // 1. RGB conversion: rgb(r, g, b) -> #rrggbb
@@ -88,7 +88,7 @@ fn convert_color(val: &str) -> String {
     });
 
     if let Some(hex) = colors.get(lower.as_str()) {
-        if hex.len() < lower.len() {
+        if hex.len() <= lower.len() {
             return hex.to_string();
         }
     }
@@ -163,5 +163,14 @@ mod tests {
         // Correct.
 
         // "black" (5) -> "#000" (4). Convert.
+    }
+
+    #[test]
+    fn test_convert_equal_length_named_color() {
+        let input = "<svg stroke=\"blue\"></svg>";
+        let expected = "<svg stroke=\"#00f\"/>";
+        let mut doc = parser::parse(input).unwrap();
+        ConvertColors.apply(&mut doc);
+        assert_eq!(printer::print(&doc), expected);
     }
 }

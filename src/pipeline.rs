@@ -81,16 +81,16 @@ const PLUGIN_DESCRIPTORS: &[PluginDescriptor] = &[
         enabled_by_default: true,
     },
     PluginDescriptor {
-        name: "inlineStyles",
-        enabled_by_default: true,
-    },
-    PluginDescriptor {
         name: "minifyStyles",
         enabled_by_default: true,
     },
     PluginDescriptor {
-        name: "convertStyleToAttrs",
+        name: "inlineStyles",
         enabled_by_default: true,
+    },
+    PluginDescriptor {
+        name: "convertStyleToAttrs",
+        enabled_by_default: false,
     },
     PluginDescriptor {
         name: "cleanupAttrs",
@@ -207,7 +207,8 @@ pub fn plugin_descriptors() -> &'static [PluginDescriptor] {
 }
 
 pub fn apply_default_pipeline(doc: &mut Document, options: &OptimizeOptions) {
-    for plugin in resolve_plugins(options) {
+    let features = document_features(doc);
+    for plugin in resolve_plugins(options, &features) {
         plugin.apply(doc);
     }
 }
@@ -229,12 +230,63 @@ pub fn unknown_plugin_names(options: &OptimizeOptions) -> Vec<String> {
     unknown
 }
 
-fn resolve_plugins(options: &OptimizeOptions) -> Vec<Box<dyn Plugin>> {
+fn resolve_plugins(options: &OptimizeOptions, features: &DocumentFeatures) -> Vec<Box<dyn Plugin>> {
     plugin_descriptors()
         .iter()
         .filter(|descriptor| is_enabled(descriptor, options))
+        .filter(|descriptor| should_run_plugin(descriptor.name, features))
         .map(|descriptor| build_plugin(descriptor.name, options.precision))
         .collect()
+}
+
+#[derive(Default)]
+struct DocumentFeatures {
+    has_group: bool,
+    has_style_element: bool,
+    has_style_attr: bool,
+    has_enable_background: bool,
+}
+
+fn document_features(doc: &Document) -> DocumentFeatures {
+    let mut features = DocumentFeatures::default();
+    collect_document_features(&doc.root, &mut features);
+    features
+}
+
+fn collect_document_features(nodes: &[crate::tree::Node], features: &mut DocumentFeatures) {
+    for node in nodes {
+        if let crate::tree::Node::Element(elem) = node {
+            if elem.name == "g" {
+                features.has_group = true;
+            }
+            if elem.name == "style" {
+                features.has_style_element = true;
+            }
+            if elem.attributes.contains_key("style") {
+                features.has_style_attr = true;
+            }
+            if elem.attributes.contains_key("enable-background") {
+                features.has_enable_background = true;
+            }
+            collect_document_features(&elem.children, features);
+        }
+    }
+}
+
+fn should_run_plugin(name: &str, features: &DocumentFeatures) -> bool {
+    match name {
+        "mergeStyles" => features.has_style_element,
+        "inlineStyles" => features.has_style_element,
+        "minifyStyles" => features.has_style_element || features.has_style_attr,
+        "convertStyleToAttrs" => features.has_style_attr,
+        "removeStyleElement" => features.has_style_element,
+        "cleanupEnableBackground" => features.has_enable_background || features.has_style_attr,
+        "moveGroupAttrsToElems"
+        | "moveElemsAttrsToGroup"
+        | "removeNonInheritableGroupAttrs"
+        | "collapseGroups" => features.has_group,
+        _ => true,
+    }
 }
 
 fn is_enabled(descriptor: &PluginDescriptor, options: &OptimizeOptions) -> bool {
@@ -316,6 +368,8 @@ fn build_plugin(name: &str, precision: usize) -> Box<dyn Plugin> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::parser;
+    use crate::printer;
 
     #[test]
     fn test_unknown_plugin_names() {
@@ -338,5 +392,44 @@ mod tests {
             .unwrap();
 
         assert!(!descriptor.enabled_by_default);
+    }
+
+    #[test]
+    fn test_convert_style_to_attrs_disabled_by_default() {
+        let descriptor = plugin_descriptors()
+            .iter()
+            .find(|descriptor| descriptor.name == "convertStyleToAttrs")
+            .unwrap();
+
+        assert!(!descriptor.enabled_by_default);
+    }
+
+    #[test]
+    fn test_style_pipeline_runs_when_style_is_present() {
+        let mut doc =
+            parser::parse("<svg><style>.a { fill: red; }</style><rect class=\"a\"/></svg>")
+                .unwrap();
+
+        apply_default_pipeline(&mut doc, &OptimizeOptions::default());
+
+        assert_eq!(
+            printer::print(&doc),
+            "<svg><rect class=\"a\" style=\"fill:red\"/></svg>"
+        );
+    }
+
+    #[test]
+    fn test_style_pipeline_inlines_after_minifying_stylesheet() {
+        let mut doc = parser::parse(
+            "<svg><style>/* comment */ .a { fill : red ; stroke : blue ; }</style><path class=\"a\" d=\"M0 0\"/></svg>",
+        )
+        .unwrap();
+
+        apply_default_pipeline(&mut doc, &OptimizeOptions::default());
+
+        assert_eq!(
+            printer::print(&doc),
+            "<svg><path class=\"a\" d=\"M0 0\" style=\"fill:red;stroke:#00f\"/></svg>"
+        );
     }
 }

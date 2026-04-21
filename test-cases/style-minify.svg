@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <style>
+    /* comment */
+    .a {
+      fill : red ;
+      stroke : blue ;
+    }
+  </style>
+  <path class="a" d="M10 10H90V90H10z"/>
+</svg>

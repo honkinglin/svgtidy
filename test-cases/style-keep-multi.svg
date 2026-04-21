@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <style>
+    .shared {
+      fill: green;
+    }
+  </style>
+  <rect class="shared" x="10" y="10" width="30" height="30"/>
+  <circle class="shared" cx="65" cy="65" r="20"/>
+</svg>
