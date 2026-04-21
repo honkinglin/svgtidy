@@ -35,7 +35,7 @@ impl Plugin for InlineStyles {
 
                 for selector in &rule.selectors {
                     let Some(paths) = matches.get(selector) else {
-                        if let SimpleSelector::Class(name) = selector {
+                        if let Some(name) = selector_class_name(selector) {
                             remaining_classes.insert(name.clone());
                         }
                         remaining_selectors.push(selector.clone());
@@ -47,14 +47,14 @@ impl Plugin for InlineStyles {
                             .entry(paths[0].clone())
                             .or_default()
                             .push(rule.declarations.clone());
-                        if let SimpleSelector::Class(name) = selector {
+                        if let Some(name) = selector_class_name(selector) {
                             inlined_classes
                                 .entry(paths[0].clone())
                                 .or_default()
                                 .push(name.clone());
                         }
                     } else {
-                        if let SimpleSelector::Class(name) = selector {
+                        if let Some(name) = selector_class_name(selector) {
                             remaining_classes.insert(name.clone());
                         }
                         remaining_selectors.push(selector.clone());
@@ -89,6 +89,8 @@ enum SimpleSelector {
     Tag(String),
     Class(String),
     Id(String),
+    TagClass(String, String),
+    TagId(String, String),
 }
 
 struct StylePlan {
@@ -264,6 +266,22 @@ fn parse_simple_selector(selector: &str) -> Option<SimpleSelector> {
         return is_ident(name).then(|| SimpleSelector::Id(name.to_string()));
     }
 
+    if let Some((tag, class)) = selector.split_once('.') {
+        if selector[tag.len() + 1..].contains('.') || selector.contains('#') {
+            return None;
+        }
+        return (is_ident(tag) && is_ident(class))
+            .then(|| SimpleSelector::TagClass(tag.to_string(), class.to_string()));
+    }
+
+    if let Some((tag, id)) = selector.split_once('#') {
+        if selector[tag.len() + 1..].contains('#') || selector.contains('.') {
+            return None;
+        }
+        return (is_ident(tag) && is_ident(id))
+            .then(|| SimpleSelector::TagId(tag.to_string(), id.to_string()));
+    }
+
     is_ident(selector).then(|| SimpleSelector::Tag(selector.to_string()))
 }
 
@@ -374,6 +392,23 @@ fn element_matches_selector(elem: &Element, selector: &SimpleSelector) -> bool {
             .get("class")
             .is_some_and(|classes| classes.split_whitespace().any(|class| class == name)),
         SimpleSelector::Id(name) => elem.attributes.get("id").is_some_and(|id| id == name),
+        SimpleSelector::TagClass(tag, class) => {
+            elem.name == *tag
+                && elem
+                    .attributes
+                    .get("class")
+                    .is_some_and(|classes| classes.split_whitespace().any(|value| value == class))
+        }
+        SimpleSelector::TagId(tag, id) => {
+            elem.name == *tag && elem.attributes.get("id").is_some_and(|value| value == id)
+        }
+    }
+}
+
+fn selector_class_name(selector: &SimpleSelector) -> Option<&String> {
+    match selector {
+        SimpleSelector::Class(name) | SimpleSelector::TagClass(_, name) => Some(name),
+        _ => None,
     }
 }
 
@@ -528,6 +563,8 @@ fn format_selector(selector: &SimpleSelector) -> String {
         SimpleSelector::Tag(name) => name.clone(),
         SimpleSelector::Class(name) => format!(".{name}"),
         SimpleSelector::Id(name) => format!("#{name}"),
+        SimpleSelector::TagClass(tag, class) => format!("{tag}.{class}"),
+        SimpleSelector::TagId(tag, id) => format!("{tag}#{id}"),
     }
 }
 
@@ -663,6 +700,26 @@ mod tests {
         let input = "<svg><style>.a,.b{fill:red}</style><rect class=\"a\"/><circle class=\"b\"/><path class=\"b\"/></svg>";
         let expected =
             "<svg><style>.b{fill:red}</style><rect style=\"fill:red\"/><circle class=\"b\"/><path class=\"b\"/></svg>";
+
+        let mut doc = parser::parse(input).unwrap();
+        InlineStyles.apply(&mut doc);
+        assert_eq!(printer::print(&doc), expected);
+    }
+
+    #[test]
+    fn test_inline_tag_class_selector() {
+        let input = "<svg><style>rect.a{fill:red}</style><rect class=\"a\"/><circle class=\"a\"/></svg>";
+        let expected = "<svg><rect style=\"fill:red\"/><circle class=\"a\"/></svg>";
+
+        let mut doc = parser::parse(input).unwrap();
+        InlineStyles.apply(&mut doc);
+        assert_eq!(printer::print(&doc), expected);
+    }
+
+    #[test]
+    fn test_inline_tag_id_selector() {
+        let input = "<svg><style>rect#hero{fill:red}</style><rect id=\"hero\"/><circle id=\"hero\"/></svg>";
+        let expected = "<svg><rect id=\"hero\" style=\"fill:red\"/><circle id=\"hero\"/></svg>";
 
         let mut doc = parser::parse(input).unwrap();
         InlineStyles.apply(&mut doc);
