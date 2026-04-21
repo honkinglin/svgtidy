@@ -23,46 +23,84 @@ fn find_one_stop_gradients(nodes: &[Node]) -> HashMap<String, String> {
         if let Node::Element(elem) = node {
             if elem.name == "linearGradient" || elem.name == "radialGradient" {
                 if let Some(id) = elem.attributes.get("id") {
-                    // Count stops
                     let mut stop_color = None;
                     let mut stop_count = 0;
+                    let mut unsupported_stop = false;
 
                     for child in &elem.children {
                         if let Node::Element(child_elem) = child {
                             if child_elem.name == "stop" {
                                 stop_count += 1;
                                 if stop_count == 1 {
-                                    // Get color
-                                    // stop-color attr or style?
-                                    // Simplifying: check stop-color attr first
-                                    if let Some(c) = child_elem.attributes.get("stop-color") {
-                                        stop_color = Some(c.clone());
+                                    if let Some(color) = extract_stop_color(child_elem) {
+                                        stop_color = Some(color);
+                                    } else {
+                                        unsupported_stop = true;
                                     }
                                 }
                             }
                         }
                     }
 
-                    // SVGO logic: if 0 stops, it's transparent/none?
-                    // Let's handle exactly 1 stop for now.
-                    // SVGO: "if 0 stops, ???"
-                    // Actually if we replace with 1 stop color it works.
-                    if stop_count == 1 {
+                    if stop_count == 1 && !unsupported_stop {
                         if let Some(c) = stop_color {
                             map.insert(id.clone(), c);
                         }
-                    } else if stop_count == 0 {
-                        // Maybe replace with "none"?
-                        map.insert(id.clone(), "none".to_string());
                     }
                 }
             }
-            // Recurse (gradients nicely nested in defs usually, but could be anywhere)
             let sub = find_one_stop_gradients(&elem.children);
             map.extend(sub);
         }
     }
     map
+}
+
+fn extract_stop_color(elem: &crate::tree::Element) -> Option<String> {
+    if elem
+        .attributes
+        .get("stop-opacity")
+        .is_some_and(|value| value.trim() != "1")
+    {
+        return None;
+    }
+
+    if let Some(style) = elem.attributes.get("style") {
+        let declarations = parse_style(style)?;
+        if declarations
+            .iter()
+            .any(|(key, value)| key == "stop-opacity" && value.trim() != "1")
+        {
+            return None;
+        }
+        if let Some((_, value)) = declarations.iter().find(|(key, _)| key == "stop-color") {
+            return Some(value.clone());
+        }
+    }
+
+    elem.attributes.get("stop-color").cloned()
+}
+
+fn parse_style(style: &str) -> Option<Vec<(String, String)>> {
+    let mut declarations = Vec::new();
+
+    for raw in style.split(';') {
+        let decl = raw.trim();
+        if decl.is_empty() {
+            continue;
+        }
+
+        let (key, value) = decl.split_once(':')?;
+        let key = key.trim();
+        let value = value.trim();
+        if key.is_empty() || value.is_empty() {
+            return None;
+        }
+
+        declarations.push((key.to_string(), value.to_string()));
+    }
+
+    Some(declarations)
 }
 
 fn replace_usages(nodes: &mut Vec<Node>, map: &HashMap<String, String>) {
@@ -114,5 +152,40 @@ mod tests {
         // Simple check
         assert!(out.contains("fill=\"red\""));
         assert!(!out.contains("fill=\"url(#g1)\""));
+    }
+
+    #[test]
+    fn test_convert_gradient_stop_color_from_style() {
+        let input = r#"<svg><defs><linearGradient id="g1"><stop style="stop-color:#00f;stop-opacity:1"/></linearGradient></defs><rect fill="url(#g1)"/></svg>"#;
+
+        let mut doc = parser::parse(input).unwrap();
+        ConvertOneStopGradients.apply(&mut doc);
+        let out = printer::print(&doc);
+
+        assert!(out.contains("fill=\"#00f\""));
+        assert!(!out.contains("fill=\"url(#g1)\""));
+    }
+
+    #[test]
+    fn test_keep_gradient_when_stop_opacity_is_present() {
+        let input = r#"<svg><defs><linearGradient id="g1"><stop stop-color="red" stop-opacity=".5"/></linearGradient></defs><rect fill="url(#g1)"/></svg>"#;
+
+        let mut doc = parser::parse(input).unwrap();
+        ConvertOneStopGradients.apply(&mut doc);
+        let out = printer::print(&doc);
+
+        assert!(out.contains("fill=\"url(#g1)\""));
+    }
+
+    #[test]
+    fn test_keep_zero_stop_gradient() {
+        let input =
+            r#"<svg><defs><linearGradient id="g1"/></defs><rect fill="url(#g1)"/></svg>"#;
+
+        let mut doc = parser::parse(input).unwrap();
+        ConvertOneStopGradients.apply(&mut doc);
+        let out = printer::print(&doc);
+
+        assert!(out.contains("fill=\"url(#g1)\""));
     }
 }

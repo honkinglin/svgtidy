@@ -12,46 +12,15 @@ impl Plugin for RemoveUselessStrokeAndFill {
 fn process_nodes(nodes: &mut Vec<Node>) {
     nodes.retain(|node| {
         if let Node::Element(elem) = node {
-            // Check for invisible elements
-            // If it's a shape (rect, circle, etc or path) and has no visible stroke/fill
-            // Default fill is black! So fill="none" must be explicit.
-
-            let has_stroke = if let Some(s) = elem.attributes.get("stroke") {
-                s != "none"
-            } else {
-                false
-            };
-
-            let has_fill = if let Some(f) = elem.attributes.get("fill") {
-                f != "none"
-            } else {
-                true
-            }; // Default is black
-
-            // If stroke is present but stroke-width is 0, it's invisible stroke.
-            let visible_stroke = if has_stroke {
-                if let Some(w) = elem.attributes.get("stroke-width") {
-                    w != "0" && w != "0px"
-                } else {
-                    true
-                } // Default 1
-            } else {
-                false
-            };
-
-            // If no visible stroke and explicit fill="none", it's invisible.
-            // But we must separate "removing attribute" from "removing element".
-
-            // Keep element if it defines something? (defs are handled elsewhere).
-            // Only remove distinct shapes.
             let is_shape = matches!(
                 elem.name.as_str(),
                 "rect" | "circle" | "ellipse" | "line" | "polygon" | "polyline" | "path"
             );
+            let stroke_disabled =
+                is_explicit_none(elem, "stroke") || has_zero_stroke_width(elem);
+            let fill_disabled = is_explicit_none(elem, "fill");
 
-            if is_shape && !visible_stroke && !has_fill {
-                // Element is invisible
-                // check for id? If it has ID it might be referenced.
+            if is_shape && stroke_disabled && fill_disabled {
                 if !elem.attributes.contains_key("id") {
                     return false;
                 }
@@ -62,24 +31,47 @@ fn process_nodes(nodes: &mut Vec<Node>) {
 
     for node in nodes {
         if let Node::Element(elem) = node {
-            // Attribute cleanup
-            if let Some(s) = elem.attributes.get("stroke") {
-                if s == "none" {
-                    elem.attributes.shift_remove("stroke");
-                }
-            }
-            if let Some(w) = elem.attributes.get("stroke-width") {
-                if w == "0" || w == "0px" {
-                    elem.attributes.shift_remove("stroke"); // Remove stroke definition if width 0
-                    elem.attributes.shift_remove("stroke-width");
-                }
-            }
-
-            // If fill is none? We usually keep fill="none" because default is black.
-            // removing fill="none" makes it black!
-
+            cleanup_paint_attrs(elem);
             process_nodes(&mut elem.children);
         }
+    }
+}
+
+fn cleanup_paint_attrs(elem: &mut crate::tree::Element) {
+    if is_explicit_none(elem, "stroke") || has_zero_stroke_width(elem) {
+        remove_attrs(
+            elem,
+            &[
+                "stroke",
+                "stroke-width",
+                "stroke-opacity",
+                "stroke-linecap",
+                "stroke-linejoin",
+                "stroke-miterlimit",
+                "stroke-dasharray",
+                "stroke-dashoffset",
+            ],
+        );
+    }
+
+    if is_explicit_none(elem, "fill") {
+        remove_attrs(elem, &["fill-opacity", "fill-rule"]);
+    }
+}
+
+fn is_explicit_none(elem: &crate::tree::Element, attr: &str) -> bool {
+    elem.attributes.get(attr).is_some_and(|value| value == "none")
+}
+
+fn has_zero_stroke_width(elem: &crate::tree::Element) -> bool {
+    elem.attributes.get("stroke-width").is_some_and(|value| {
+        matches!(value.trim(), "0" | "0px" | "0.0" | "0.0px")
+    })
+}
+
+fn remove_attrs(elem: &mut crate::tree::Element, attrs: &[&str]) {
+    for attr in attrs {
+        elem.attributes.shift_remove(*attr);
     }
 }
 
@@ -120,6 +112,27 @@ mod tests {
         let mut doc = parser::parse(input).unwrap();
         RemoveUselessStrokeAndFill.apply(&mut doc);
         // stroke and stroke-width removed.
+        assert_eq!(printer::print(&doc), expected);
+    }
+
+    #[test]
+    fn test_remove_useless_stroke_attributes_when_stroke_is_none() {
+        let input = "<svg><path d=\"M0 0\" stroke=\"none\" stroke-width=\"4\" stroke-linecap=\"round\" stroke-opacity=\".5\" fill=\"red\"/></svg>";
+        let expected = "<svg><path d=\"M0 0\" fill=\"red\"/></svg>";
+
+        let mut doc = parser::parse(input).unwrap();
+        RemoveUselessStrokeAndFill.apply(&mut doc);
+        assert_eq!(printer::print(&doc), expected);
+    }
+
+    #[test]
+    fn test_remove_useless_fill_attributes_when_fill_is_none() {
+        let input =
+            "<svg><path d=\"M0 0\" fill=\"none\" fill-rule=\"evenodd\" fill-opacity=\".5\" stroke=\"red\"/></svg>";
+        let expected = "<svg><path d=\"M0 0\" fill=\"none\" stroke=\"red\"/></svg>";
+
+        let mut doc = parser::parse(input).unwrap();
+        RemoveUselessStrokeAndFill.apply(&mut doc);
         assert_eq!(printer::print(&doc), expected);
     }
 }
